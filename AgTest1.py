@@ -91,8 +91,6 @@ def main():
     print('AG testing 1')
     print('The goal is to generate this array:\n[1, 2, 3, 4, 5, 6, 7, 8, 9]')
     print ("{:<8} {:<20} {:<15} {:<15} {:<25}".format("Gen #", "Total Fitness", "Avg Fitness", "Best Fitness", "Best"))
-    orgs = initializeOrganisms()
-    evaluateOrganisms(orgs)
     finalGeneration = doOneRun()
     #print("The final generation was: ", finalGeneration)
 main()
