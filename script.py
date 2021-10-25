@@ -3,7 +3,9 @@ import copy
 import random
 import math
 
-from classes import ClientData
+from classes.ClientData import ClientData
+from classes.Individual import Individual
+
 CAPACITY = 0
 N_CLIENTS = 0
 NUMBER_OF_GENES =0
@@ -24,52 +26,24 @@ def read_file(file_location_path):
             if i == 3: CAPACITY = int(line)
             if i > 4:
                 cols = line.split()
-                # clients_data.append(ClientData(int(cols[0]), int(cols[1]), int(cols[2]), int(cols[3]),
-                #     int(cols[4]),int(cols[5]),int(cols[6])
-                # ))
-                clients_data.append({
-                    "client_number": int(cols[0]),
-                    "x": int(cols[1]),
-                    "y": int(cols[2]),
-                    "demand": int(cols[3]),
-                    "ready_time": int(cols[4]),
-                    "due_date": int(cols[5]),
-                    "service_time": int(cols[6])
-                });
+                clients_data.append(ClientData(
+                    client_number = int(cols[0]), 
+                    x = int(cols[1]), 
+                    y = int(cols[2]), 
+                    demand = int(cols[3]),
+                    ready_time = int(cols[4]),
+                    due_date = int(cols[5]),
+                    service_time = int(cols[6])
+                ))
     return clients_data;
 
-def initialize_organisms(clients_data):
+def initialize_organisms(depot_data, clients_data):
     organisms = []
     for _ in range(NUMBER_OF_ORGANISMS):
-        clients_to_visit = copy.deepcopy(clients_data)
-        path = []
-        while clients_to_visit:
-            index = random.randint(0, len(clients_to_visit) -1)
-            path.append( clients_to_visit[index]['client_number'] - 1 )
-            del clients_to_visit[index]
-        organisms.append({
-            "genes": path,
-            "fitness": 0,
-        })
+        organisms.append(
+            Individual(depot_data, clients_data, CAPACITY)
+        )
     return organisms
-
-def get_distance(p1, p2):
-    return math.dist( [p1['x'], p1['y']], [p2['x'], p2['y']] )
-
-def evaluate_path(path, origin, clients):
-    total_cost = 0
-    position = origin
-    total_cargo = 0
-    for i in range( len(path) ):
-        total_cargo += clients[ path[i] ]["demand"]
-        if total_cargo >= CAPACITY:
-            total_cost += get_distance(position, origin)# Go back to origin to empty cargo
-            total_cost += get_distance(origin, position) # Go to the client that we must serve
-            total_cargo = clients[ path[i] ]["demand"] # The cargo is now just the demand of the current client
-        else:
-            total_cost += get_distance( position, clients[path[i]] )
-        position = clients[path[i]]
-    return total_cost
 
 def evaluate_organisms(organisms, origin, client):
     best_fitness = 0
@@ -154,6 +128,12 @@ def main():
     data = read_file("vrptw_c101.txt");
     clients_data = data[1:]
     depot_data = data[0]
-    final_generation = nsga2_main_loop( depot_data,  clients_data)
-    print(orgs[0])
+    initialize_organisms(depot_data, clients_data)
+    #final_generation = nsga2_main_loop( depot_data,  clients_data)
+    #print(orgs[0])
 main()
+
+### Inicializar
+### Clasificar en frentes 
+### Seleccion de sgte. poblacion
+### Criterio de parada ( Nro. de generaciones - Que no cambien los frentes x n generaciones )
