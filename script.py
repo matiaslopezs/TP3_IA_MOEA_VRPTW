@@ -55,6 +55,9 @@ def evaluate_organisms(organisms, origin, client):
             best_fitness = path_cost
     return best_fitness
 
+def evaluate_path(gene, origin, client):
+    None
+
 def get_total_fitness(orgs):
     total_fitness = 0 
     for fitness in [ org["fitness"] for org in  orgs]:
