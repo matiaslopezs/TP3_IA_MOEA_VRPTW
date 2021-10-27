@@ -1,6 +1,8 @@
 import random
 import copy
 
+from classes.Sucesors import NSGA
+
 NUMBER_ORGANISMS = 100
 NUMBER_GENES = 9
 GOAL = [1,2,3,4,5,6,7,8,9]
@@ -88,9 +90,11 @@ def doOneRun():
         generationCount+=1
 
 def main():
-    print('AG testing 1')
-    print('The goal is to generate this array:\n[1, 2, 3, 4, 5, 6, 7, 8, 9]')
-    print ("{:<8} {:<20} {:<15} {:<15} {:<25}".format("Gen #", "Total Fitness", "Avg Fitness", "Best Fitness", "Best"))
-    finalGeneration = doOneRun()
-    #print("The final generation was: ", finalGeneration)
+    sucesor = NSGA()
+    sucesor.mutation()
+    # print('AG testing 1')
+    # print('The goal is to generate this array:\n[1, 2, 3, 4, 5, 6, 7, 8, 9]')
+    # print ("{:<8} {:<20} {:<15} {:<15} {:<25}".format("Gen #", "Total Fitness", "Avg Fitness", "Best Fitness", "Best"))
+    # finalGeneration = doOneRun()
+    # #print("The final generation was: ", finalGeneration)
 main()
