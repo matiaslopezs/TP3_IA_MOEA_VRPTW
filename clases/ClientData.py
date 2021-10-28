@@ -21,9 +21,11 @@ class ClientData(object):
     def timepoint_is_in_the_window(self, timepoint):
         start = timepoint
         end = timepoint + self.service_time
-        return start >= self.ready_time and self.due_date <= end
+        #print('llega en tiempo servicio({}-{}) y ventana({}-{}) = {}'.format(start, end, self.ready_time, self.due_date, start >= self.ready_time and self.due_date >= end))
+        return start >= self.ready_time and end <= self.due_date 
     
     def timepoint_is_before(self, timepoint):
+        #print('llega antes {}'.format(timepoint < self.ready_time))
         return timepoint < self.ready_time
 
     def can_serve_in_timepoint(self, timepoint):

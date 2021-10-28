@@ -3,9 +3,10 @@ import copy
 import random
 import math
 
-from classes.ClientData import ClientData
-from classes.Individual import Individual
+from clases.ClientData import ClientData
+from clases.Individual import Individual
 
+# los tres primeros datos serán cargados al leer el archivo
 CAPACITY = 0
 N_CLIENTS = 0
 NUMBER_OF_GENES =0
@@ -131,9 +132,28 @@ def main():
     data = read_file("vrptw_c101.txt");
     clients_data = data[1:]
     depot_data = data[0]
-    initialize_organisms(depot_data, clients_data)
+    poblacion = initialize_organisms(depot_data, clients_data)
+    for individuo in poblacion:
+        # print(len(individuo.get_ruta()))
+    #    print(individuo.genes)
+    #    print("Cant vehiculos: {}; Tiempo total de recorrido: {}".format(individuo.cantidad_vehiculos, individuo.tiempo_total_vehiculos))
+        # print(individuo.get_fitness())
+        # print(individuo.get_ruta())
+        # for i in range(0,len(individuo.get_ruta())-1):    
+        #     if individuo.get_ruta()[i] == 0 and individuo.get_ruta()[i+1] == 0:
+        print(individuo.get_fitness())
+        print(individuo.get_ruta())
+        # print(individuo.get_gen2())
+        # cont = 0
+        # for item in individuo.get_ruta():
+        #     if(item == 0):
+        #         cont+=1
+        # print(cont)    
+    # print(len(poblacion))
+
     #final_generation = nsga2_main_loop( depot_data,  clients_data)
     #print(orgs[0])
+
 main()
 
 ### Inicializar

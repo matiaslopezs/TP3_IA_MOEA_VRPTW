@@ -1,7 +1,7 @@
 import random
 import copy
 
-from classes.Sucesors import NSGA
+from clases.NSGA import NSGA
 
 NUMBER_ORGANISMS = 100
 NUMBER_GENES = 9
