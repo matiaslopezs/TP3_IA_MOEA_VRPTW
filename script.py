@@ -15,6 +15,7 @@ MAX_GENERATION_NUMBER = 1000
 MUTATION_RATE= 0.001
 
 def read_file(file_location_path):
+# función para leer el archivo y procesar para que pueda ser utilizado
     clients_data = []
     with open(file_location_path) as data:
         for i, line in enumerate(data):
@@ -38,13 +39,14 @@ def read_file(file_location_path):
                 ))
     return clients_data;
 
-def initialize_organisms(depot_data, clients_data):
-    organisms = []
+def inicializar_poblacion(depot_data, clients_data):
+# función que instancia todos los individuos de la población
+    poblacion = []
     for _ in range(NUMBER_OF_ORGANISMS):
-        organisms.append(
+        poblacion.append(
             Individual(depot_data, clients_data, CAPACITY)
         )
-    return organisms
+    return poblacion
 
 def evaluate_organisms(organisms, origin, client):
     best_fitness = 0
@@ -120,7 +122,7 @@ def nsga2_main_loop( origin, clients ):
     
     ##THIS BELOW IS AN EASIER IMPLEMENTATION TO USE MEANWHILE
     generation_count = 0
-    orgs = initialize_organisms(clients)
+    orgs = inicializar_poblacion(clients)
     while( generation_count < MAX_GENERATION_NUMBER ):
         perfect_generation = evaluate_organisms(orgs, origin, clients)
         best = get_best_from_orgs(orgs)
@@ -132,24 +134,15 @@ def main():
     data = read_file("vrptw_c101.txt");
     clients_data = data[1:]
     depot_data = data[0]
-    poblacion = initialize_organisms(depot_data, clients_data)
+    poblacion = inicializar_poblacion(depot_data, clients_data)
     for individuo in poblacion:
-        # print(len(individuo.get_ruta()))
     #    print(individuo.genes)
     #    print("Cant vehiculos: {}; Tiempo total de recorrido: {}".format(individuo.cantidad_vehiculos, individuo.tiempo_total_vehiculos))
-        # print(individuo.get_fitness())
-        # print(individuo.get_ruta())
         # for i in range(0,len(individuo.get_ruta())-1):    
         #     if individuo.get_ruta()[i] == 0 and individuo.get_ruta()[i+1] == 0:
         print(individuo.get_fitness())
         print(individuo.get_ruta())
         # print(individuo.get_gen2())
-        # cont = 0
-        # for item in individuo.get_ruta():
-        #     if(item == 0):
-        #         cont+=1
-        # print(cont)    
-    # print(len(poblacion))
 
     #final_generation = nsga2_main_loop( depot_data,  clients_data)
     #print(orgs[0])
