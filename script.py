@@ -48,6 +48,7 @@ def inicializar_poblacion(depot_data, clients_data):
         )
     return poblacion
 
+##################### ESTAS FUNCIONES POSIBLEMENTE NO USE Y DEBA BORRAR #######################
 def evaluate_organisms(organisms, origin, client):
     best_fitness = 0
     for org_index in range(NUMBER_OF_ORGANISMS):
@@ -67,9 +68,45 @@ def get_total_fitness(orgs):
         total_fitness += fitness
     return total_fitness
 
+##################### HASTA ACÁ #######################
+
 def ranking_de_frentes(poblacion):
 # función que se encarga de clasificar a toda la población en frentes pareto y en base a eso asignarles un dummy fitness
-    pass
+    front = 0
+    poblacion_actual = poblacion
+    poblacion_en_frentes = []
+    # mientras todos los individuos no pertenezcan a un frente
+    while(poblacion_no_clasificada(poblacion, poblacion_en_frentes)):
+        # se creará un nuevo frente pareto para clasificar individuos
+        front+= 1
+        # calculamos un nuevo frente
+        # POBLACIÓN ACTUAL NO ESTÁ SIENDO ACTUALIZADA, SOLO CAMBIA SU VALOR DENTRO DE CALCULAR FRENTE PERO ESO NO SE RETORNA !!!!
+        poblacion_en_frentes.append( calcular_frente(poblacion_actual, front) )
+
+def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
+# mientras los individuos en un frente pareto sean < que la población total significa que no se han clasificado todos los individuos
+    return len(poblacion) > len(poblacion_en_frentes)
+
+def calcular_frente(poblacion_actual, front):
+# función que calcula el frente pareto de la población actual
+    nuevo_frente = []
+    for individuo in poblacion_actual:
+        band = 0
+        for individuo_comp in poblacion_actual:
+            # si algun elemento es mejor (menor por ser minimización) en ambos fitness objetivo entonces este individuo es dominado
+            if (individuo_comp.cantidad_vehiculos < individuo.cantidad_vehiculos and individuo_comp.tiempo_total_vehiculos < individuo.tiempo_total_vehiculos):
+                band = 1 
+        # si el individuo es no dominado
+        if band == 0:
+            # lo quitamos de la población actual
+            poblacion_actual.remove(individuo)
+            # lo asignamos al frente pareto
+            nuevo_frente.append(individuo)
+            # luego calculamos su fitness
+            # IMPLEMENTAR FUNCION CALCULAR FITNESS!!!!!!!!!!
+            individuo.calcular_fitness(front ,nuevo_frente) # también debemos hacer la degradación de nicho
+    
+    return nuevo_frente
 
 def dibujar_frente_pareto(poblacion):
 # función para graficar el frente pareto teniendo como eje x a F1(cant vehiculos) y como eje y a F2(tiempo total vehiculos)
@@ -88,7 +125,7 @@ def dibujar_frente_pareto(poblacion):
     for i in range(100):
         print(" {}".format(matriz[i]))
     print("\n")
-        
+
 
 def get_parent_using_roulette(organisms):
     total_fitness = get_total_fitness(organisms)
