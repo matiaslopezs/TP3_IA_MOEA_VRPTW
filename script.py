@@ -95,13 +95,19 @@ def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
 def calcular_frente(poblacion_actual, front):
 # función que calcula el frente pareto de la población actual
     nuevo_frente = []
+    # borrar luego
+    nuevo_frente_2 = []
     for individuo in poblacion_actual:
         es_dominado = False
+        # prueba, luego borrar
+        domina = True
         for individuo_comp in poblacion_actual:
             # si algun elemento es mejor (menor por ser minimización) en ambos fitness objetivo entonces este individuo es dominado
             if (individuo_comp.cantidad_vehiculos < individuo.cantidad_vehiculos and individuo_comp.tiempo_total_vehiculos < individuo.tiempo_total_vehiculos):
                 es_dominado = True 
-                
+            # borrar luego
+            if not verificar_si_domina(individuo,individuo_comp):
+                domina = False
         # si el individuo es no dominado
         if es_dominado == False:
             # lo asignamos al frente pareto
@@ -109,10 +115,33 @@ def calcular_frente(poblacion_actual, front):
             # luego calculamos su fitness
             # IMPLEMENTAR FUNCION CALCULAR FITNESS!!!!!!!!!!
             #individuo.calcular_fitness(front ,nuevo_frente) # también debemos hacer la degradación de nicho
+        # borrar luego
+        if domina == True:
+            print('entra alguna vez')
+            nuevo_frente_2.append(individuo)
+    if (nuevo_frente == nuevo_frente_2):
+        print('frentes iguales')
+    else:
+        print('frentes diferentes {} y {}'.format(len(nuevo_frente),len(nuevo_frente_2)))
     # quitamos los elementos de la poblacion actual que ya están en el frente
     poblacion_actual = [item for item in poblacion_actual if item not in nuevo_frente]
 
     return nuevo_frente, poblacion_actual
+
+# borrar luego
+def verificar_si_domina(individuo, individuo_comp):
+    domina = False
+    indcv = individuo.cantidad_vehiculos    
+    indtv = individuo.tiempo_total_vehiculos
+    iccv = individuo_comp.cantidad_vehiculos
+    ictv = individuo_comp.tiempo_total_vehiculos
+    if (indcv <= iccv and indtv <= ictv ):
+        if (indcv < iccv or indtv < ictv):
+            domina = True ;
+        else:
+            domina = False;
+    return domina
+
 
 def dibujar_frente_pareto(poblacion):
 # función para graficar el frente pareto teniendo como eje x a F1(cant vehiculos) y como eje y a F2(tiempo total vehiculos)
