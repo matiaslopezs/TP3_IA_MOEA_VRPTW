@@ -77,60 +77,41 @@ def ranking_de_frentes(poblacion):
     poblacion_actual = poblacion
     poblacion_en_frentes = []
     # mientras todos los individuos no pertenezcan a un frente
-    while(poblacion_no_clasificada(poblacion, poblacion_en_frentes)):
+    while(poblacion_no_clasificada(poblacion_actual, poblacion_en_frentes)):
         # se creará un nuevo frente pareto para clasificar individuos
         front+= 1
         # calculamos un nuevo frente
-        # POBLACIÓN ACTUAL NO ESTÁ SIENDO ACTUALIZADA, SOLO CAMBIA SU VALOR DENTRO DE CALCULAR FRENTE PERO ESO NO SE RETORNA !!!!
         nuevo_frente, poblacion_actual = calcular_frente(poblacion_actual, front)
-        print('frente {}'.format(front))
-        for ind in nuevo_frente:
-            print(dict_individual_number[ind])
-        # print(len(nuevo_frente))
-        # print('and')
-        # print(len(poblacion_actual))
+        # print('frente {}'.format(front))
+        # for ind in nuevo_frente:
+        #     print(dict_individual_number[ind])
         poblacion_en_frentes.append( nuevo_frente )
 
 def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
 # mientras los individuos en un frente pareto sean < que la población total significa que no se han clasificado todos los individuos
-    print('termina? {}'.format(not(len(poblacion) > len(poblacion_en_frentes))))
+    # print('termina? {}'.format(not(len(poblacion) > len(poblacion_en_frentes))))
     return len(poblacion) > len(poblacion_en_frentes)
 
 def calcular_frente(poblacion_actual, front):
 # función que calcula el frente pareto de la población actual
     nuevo_frente = []
-    # copiamos los datos de la población actual ya que iremos removiendo sus valores
-    # (realizamos copy.copy() porque esta es la forma de pasar por valor y no por referencia)
-    poblacion_actual_copia = copy.copy(poblacion_actual)
     for individuo in poblacion_actual:
         es_dominado = False
-        # indcv = individuo.cantidad_vehiculos    
-        # indtv = individuo.tiempo_total_vehiculos
-        for individuo_comp in poblacion_actual_copia:
+        for individuo_comp in poblacion_actual:
             # si algun elemento es mejor (menor por ser minimización) en ambos fitness objetivo entonces este individuo es dominado
             if (individuo_comp.cantidad_vehiculos < individuo.cantidad_vehiculos and individuo_comp.tiempo_total_vehiculos < individuo.tiempo_total_vehiculos):
-            # iccv = individuo_comp.cantidad_vehiculos
-            # ictv = individuo_comp.tiempo_total_vehiculos
-            # if ( (indcv > iccv and indtv > ictv) or (indcv >= iccv and indtv > ictv) or (indcv >= iccv and indtv > ictv) ):
                 es_dominado = True 
-
-            # if (indcv <= iccv and indtv <= ictv ):
-            #     if (indcv < iccv or indtv < ictv):
-            #         es_dominado = False ;
-            # else:
-            #     es_dominado = True;
-            
-
+                
         # si el individuo es no dominado
         if es_dominado == False:
-            # lo quitamos de la población actual
-            poblacion_actual.remove(individuo)
             # lo asignamos al frente pareto
             nuevo_frente.append(individuo)
             # luego calculamos su fitness
             # IMPLEMENTAR FUNCION CALCULAR FITNESS!!!!!!!!!!
             #individuo.calcular_fitness(front ,nuevo_frente) # también debemos hacer la degradación de nicho
-    
+    # quitamos los elementos de la poblacion actual que ya están en el frente
+    poblacion_actual = [item for item in poblacion_actual if item not in nuevo_frente]
+
     return nuevo_frente, poblacion_actual
 
 def dibujar_frente_pareto(poblacion):
@@ -143,7 +124,7 @@ def dibujar_frente_pareto(poblacion):
         cant_vehiculos = poblacion[i].get_fitness()[0]
         tiempo_total = poblacion[i].get_fitness()[1]
         # convertimos el rango [21000,27000] a [0,100]
-        tiempo_total = int (((tiempo_total - 21000)/(27000 -21000) ) * 100)
+        tiempo_total = int (((tiempo_total - 20000)/(30000 -21000) ) * 100)
         # ahora cargamos en la matriz
         matriz[cant_vehiculos][tiempo_total] = i
         # guardamos en el diccionario para poder saber que individuo entró en cada frente
