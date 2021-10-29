@@ -13,6 +13,7 @@ NUMBER_OF_GENES =0
 NUMBER_OF_ORGANISMS = 100
 MAX_GENERATION_NUMBER = 1000
 MUTATION_RATE= 0.001
+dict_individual_number = {}
 
 def read_file(file_location_path):
 # función para leer el archivo y procesar para que pueda ser utilizado
@@ -81,35 +82,60 @@ def ranking_de_frentes(poblacion):
         front+= 1
         # calculamos un nuevo frente
         # POBLACIÓN ACTUAL NO ESTÁ SIENDO ACTUALIZADA, SOLO CAMBIA SU VALOR DENTRO DE CALCULAR FRENTE PERO ESO NO SE RETORNA !!!!
-        poblacion_en_frentes.append( calcular_frente(poblacion_actual, front) )
+        nuevo_frente, poblacion_actual = calcular_frente(poblacion_actual, front)
+        print('frente {}'.format(front))
+        for ind in nuevo_frente:
+            print(dict_individual_number[ind])
+        # print(len(nuevo_frente))
+        # print('and')
+        # print(len(poblacion_actual))
+        poblacion_en_frentes.append( nuevo_frente )
 
 def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
 # mientras los individuos en un frente pareto sean < que la población total significa que no se han clasificado todos los individuos
+    print('termina? {}'.format(not(len(poblacion) > len(poblacion_en_frentes))))
     return len(poblacion) > len(poblacion_en_frentes)
 
 def calcular_frente(poblacion_actual, front):
 # función que calcula el frente pareto de la población actual
     nuevo_frente = []
+    # copiamos los datos de la población actual ya que iremos removiendo sus valores
+    # (realizamos copy.copy() porque esta es la forma de pasar por valor y no por referencia)
+    poblacion_actual_copia = copy.copy(poblacion_actual)
     for individuo in poblacion_actual:
-        band = 0
-        for individuo_comp in poblacion_actual:
+        es_dominado = False
+        # indcv = individuo.cantidad_vehiculos    
+        # indtv = individuo.tiempo_total_vehiculos
+        for individuo_comp in poblacion_actual_copia:
             # si algun elemento es mejor (menor por ser minimización) en ambos fitness objetivo entonces este individuo es dominado
             if (individuo_comp.cantidad_vehiculos < individuo.cantidad_vehiculos and individuo_comp.tiempo_total_vehiculos < individuo.tiempo_total_vehiculos):
-                band = 1 
+            # iccv = individuo_comp.cantidad_vehiculos
+            # ictv = individuo_comp.tiempo_total_vehiculos
+            # if ( (indcv > iccv and indtv > ictv) or (indcv >= iccv and indtv > ictv) or (indcv >= iccv and indtv > ictv) ):
+                es_dominado = True 
+
+            # if (indcv <= iccv and indtv <= ictv ):
+            #     if (indcv < iccv or indtv < ictv):
+            #         es_dominado = False ;
+            # else:
+            #     es_dominado = True;
+            
+
         # si el individuo es no dominado
-        if band == 0:
+        if es_dominado == False:
             # lo quitamos de la población actual
             poblacion_actual.remove(individuo)
             # lo asignamos al frente pareto
             nuevo_frente.append(individuo)
             # luego calculamos su fitness
             # IMPLEMENTAR FUNCION CALCULAR FITNESS!!!!!!!!!!
-            individuo.calcular_fitness(front ,nuevo_frente) # también debemos hacer la degradación de nicho
+            #individuo.calcular_fitness(front ,nuevo_frente) # también debemos hacer la degradación de nicho
     
-    return nuevo_frente
+    return nuevo_frente, poblacion_actual
 
 def dibujar_frente_pareto(poblacion):
 # función para graficar el frente pareto teniendo como eje x a F1(cant vehiculos) y como eje y a F2(tiempo total vehiculos)
+# Para guardar el gráfico, llamar solo a esta función en main y ejecutamos el comando: python script.py > matriz.txt
     # inicializamos la matriz
     matriz = [[' ' for col in range(100)] for row in range(100)]
     # recorremos todos los individuos de la población
@@ -120,6 +146,8 @@ def dibujar_frente_pareto(poblacion):
         tiempo_total = int (((tiempo_total - 21000)/(27000 -21000) ) * 100)
         # ahora cargamos en la matriz
         matriz[cant_vehiculos][tiempo_total] = i
+        # guardamos en el diccionario para poder saber que individuo entró en cada frente
+        dict_individual_number[poblacion[i]] = i
     # por último imprimimos el gráfico
     # aclaración: esta impresión hace que la Y sea la F1 y la X la F2
     for i in range(100):
@@ -196,11 +224,13 @@ def main():
     depot_data = data[0]
     poblacion = inicializar_poblacion(depot_data, clients_data)
     
-    # dibujar_frente_pareto(poblacion)
+    dibujar_frente_pareto(poblacion)
     
-    for individuo in poblacion:
-        print(individuo.get_fitness())
-        # print(individuo.get_ruta())
+    ranking_de_frentes(poblacion)
+
+    # for individuo in poblacion:
+    #     print(individuo.get_fitness())
+    #     print(individuo.get_ruta())
     
     #final_generation = nsga2_main_loop( depot_data,  clients_data)
     #print(orgs[0])
