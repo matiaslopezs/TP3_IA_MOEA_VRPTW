@@ -67,6 +67,29 @@ def get_total_fitness(orgs):
         total_fitness += fitness
     return total_fitness
 
+def ranking_de_frentes(poblacion):
+# función que se encarga de clasificar a toda la población en frentes pareto y en base a eso asignarles un dummy fitness
+    pass
+
+def dibujar_frente_pareto(poblacion):
+# función para graficar el frente pareto teniendo como eje x a F1(cant vehiculos) y como eje y a F2(tiempo total vehiculos)
+    # inicializamos la matriz
+    matriz = [[' ' for col in range(100)] for row in range(100)]
+    # recorremos todos los individuos de la población
+    for i in range(0,len(poblacion)):
+        cant_vehiculos = poblacion[i].get_fitness()[0]
+        tiempo_total = poblacion[i].get_fitness()[1]
+        # convertimos el rango [21000,27000] a [0,100]
+        tiempo_total = int (((tiempo_total - 21000)/(27000 -21000) ) * 100)
+        # ahora cargamos en la matriz
+        matriz[cant_vehiculos][tiempo_total] = i
+    # por último imprimimos el gráfico
+    # aclaración: esta impresión hace que la Y sea la F1 y la X la F2
+    for i in range(100):
+        print(" {}".format(matriz[i]))
+    print("\n")
+        
+
 def get_parent_using_roulette(organisms):
     total_fitness = get_total_fitness(organisms)
     random_select_point = random.randint(1,total_fitness)
@@ -135,15 +158,13 @@ def main():
     clients_data = data[1:]
     depot_data = data[0]
     poblacion = inicializar_poblacion(depot_data, clients_data)
+    
+    # dibujar_frente_pareto(poblacion)
+    
     for individuo in poblacion:
-    #    print(individuo.genes)
-    #    print("Cant vehiculos: {}; Tiempo total de recorrido: {}".format(individuo.cantidad_vehiculos, individuo.tiempo_total_vehiculos))
-        # for i in range(0,len(individuo.get_ruta())-1):    
-        #     if individuo.get_ruta()[i] == 0 and individuo.get_ruta()[i+1] == 0:
         print(individuo.get_fitness())
-        print(individuo.get_ruta())
-        # print(individuo.get_gen2())
-
+        # print(individuo.get_ruta())
+    
     #final_generation = nsga2_main_loop( depot_data,  clients_data)
     #print(orgs[0])
 
