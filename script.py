@@ -1,5 +1,6 @@
 # import pandas as pd
 import copy
+from os import pardir
 import random
 import math
 
@@ -10,9 +11,13 @@ from clases.Individual import Individual
 CAPACITY = 0
 N_CLIENTS = 0
 NUMBER_OF_GENES =0
-NUMBER_OF_ORGANISMS = 100
+NUMERO_DE_INDIVIDUOS = 100
 MAX_GENERATION_NUMBER = 1000
-MUTATION_RATE= 0.001
+PROPORCION_ELITISTA = 0.1
+PROPORCION_CROSSOVER = 0.9
+PROPORCION_MUTACION = 0.05 
+MUTATION_RATE= 0.04
+# variable global diccionario para mapear individuos a sus indices
 dict_individual_number = {}
 
 def read_file(file_location_path):
@@ -43,33 +48,11 @@ def read_file(file_location_path):
 def inicializar_poblacion(depot_data, clients_data):
 # función que instancia todos los individuos de la población
     poblacion = []
-    for _ in range(NUMBER_OF_ORGANISMS):
+    for _ in range(NUMERO_DE_INDIVIDUOS):
         poblacion.append(
             Individual(depot_data, clients_data, CAPACITY)
         )
     return poblacion
-
-##################### ESTAS FUNCIONES POSIBLEMENTE NO USE Y DEBA BORRAR #######################
-def evaluate_organisms(organisms, origin, client):
-    best_fitness = 0
-    for org_index in range(NUMBER_OF_ORGANISMS):
-        ##EVALUATE ROUTE
-        path_cost = evaluate_path( organisms[org_index]["genes"], origin , client )
-        organisms[org_index]["fitness"] = path_cost
-        if(path_cost < best_fitness):
-            best_fitness = path_cost
-    return best_fitness
-
-def evaluate_path(gene, origin, client):
-    None
-
-def get_total_fitness(orgs):
-    total_fitness = 0 
-    for fitness in [ org["fitness"] for org in  orgs]:
-        total_fitness += fitness
-    return total_fitness
-
-##################### HASTA ACÁ #######################
 
 def ranking_de_frentes(poblacion):
 # función que se encarga de clasificar a toda la población en frentes pareto y en base a eso asignarles un dummy fitness
@@ -147,69 +130,117 @@ def dibujar_frente_pareto(poblacion):
         print(" {}".format(matriz[i]))
     print("\n")
 
+def ordenar_poblacion_por_fitness(poblacion):
+#ordenamos la población según el fitness final calculado
+    poblacion.sort(key= lambda individual: individual.fitness, reverse= True)
 
-def get_parent_using_roulette(organisms):
-    total_fitness = get_total_fitness(organisms)
+def seleccion_elitista(poblacion):
+# elegimos de manera elitista al 10% mejor de la población para que pase a la siguiente generación
+    # cant is the amount of elements of the population to be select with elistism
+    cant = int(NUMERO_DE_INDIVIDUOS*PROPORCION_ELITISTA)
+    # we select the 'cant' amount of elements and append to the sucesors list
+    siguiente_generacion = []
+    for ind in range(0,cant):
+        siguiente_generacion.append(poblacion[ind])
+    
+    return siguiente_generacion
+
+def mutacion(poblacion):
+# función que agarra a la población de la nueva generación y tiene cierta probabilidad de mutar algunos de sus genes
+    # first we calculate the amount of elements to be mutated
+    cant = math.ceil(PROPORCION_MUTACION * len(poblacion))
+    # then we choose those elements
+    for i in range(0,cant):
+        indiv = random.choice(poblacion)
+        # for each element we mutate every gene with a probability of 0.04
+        size = len(indiv.get_ruta())
+        for g in range(size):
+            if( random.random() <= MUTATION_RATE ):
+                # if there will be a mutation we choose another gen index and we swap both
+                swap = random.randint(0,size-1)
+                while swap == g:
+                    swap = random.randint(0,size-1)
+                # print(indiv[g],indiv[swap])
+                # DEBO COMPROBAR QUE EN LA POBLACIÓN FINAL ESTÉN LOS INDIVIDUOS MUTADOS !!!!!!!!
+                indiv.get_ruta()[g],indiv.get_ruta()[swap] = indiv.get_ruta()[swap],indiv.get_ruta()[g]
+
+def reproduccion_crossover(poblacion):
+# función que realiza la reproducción de individuos mediante crossover. Previamente elige cada par con la ruleta
+    # next_generation = copy.deepcopy(organisms)
+    nueva_generacion = []
+    # repetir mientras el tamaño de la nueva generación sea menor a la proporcion de sucesores que debe generar el crossover
+    while(len(nueva_generacion) < ( NUMERO_DE_INDIVIDUOS * PROPORCION_CROSSOVER)):
+        # elegimos un padre y una madre con la técnica de la ruleta
+        padre = get_parent_usando_ruleta(poblacion)
+        madre = get_parent_usando_ruleta(poblacion)
+        break
+    return nueva_generacion
+
+def get_parent_usando_ruleta(poblacion):
+# función para obtener un padre con la técnica de la ruleta para aplicar la reproducción
+    # obtenemos la suma total de fitness de todos los individuos
+    total_fitness = int(get_total_fitness(poblacion))
+    # elegimos un punto random que será el individuo a elegir
     random_select_point = random.randint(1,total_fitness)
-    running_total = 0
-    for i in range(NUMBER_OF_ORGANISMS):
-        running_total += organisms[i]["fitness"]
-        if running_total >= random_select_point:
-            return organisms[i]
+    sumatoria_actual = 0
+    for i in range(NUMERO_DE_INDIVIDUOS):
+        # vamos sumando los valores de fitness
+        sumatoria_actual += poblacion[i].fitness
+        #hasta llegar o superar al punto random elegido entonces retornamos el individuo que llegó a ese punto
+        if sumatoria_actual >= random_select_point:
+            return poblacion[i]
 
-def produce_next_generation(organisms):
-    next_generation = copy.deepcopy(organisms)
-    for org_index in range(NUMBER_OF_ORGANISMS):
-        dad = get_parent_using_roulette(organisms)
-        mom = get_parent_using_roulette(organisms)
-        crossover_point = random.randint(0, NUMBER_OF_GENES)
-        for j in range(NUMBER_OF_GENES):
-            is_a_mutation = random.randint( 1,int(1/MUTATION_RATE) )
-            if(is_a_mutation == 1): #        // we decided to make this gene a mutation
-                next_generation[org_index]["genes"][j] = random.randint(1,9)
-            else:
-                #// we decided to copy this gene from a parent
-                if j < crossover_point:
-                    next_generation[org_index]["genes"][j] = dad[j]
-                else:
-                    next_generation[org_index]["genes"][j] = mom[j]
-    return next_generation
+def get_total_fitness(poblacion):
+# función que retorna la sumatoria de fitness de toda la población
+    total_fitness = 0
+    for individuo in poblacion:
+        total_fitness += individuo.fitness
+    return total_fitness
 
 def get_avg_from_orgs(orgs):
-    return get_total_fitness(orgs) / NUMBER_OF_ORGANISMS
+    return get_total_fitness(orgs) / NUMERO_DE_INDIVIDUOS
 
 def get_best_from_orgs(orgs):
     best = orgs[0]
-    for i in range(NUMBER_OF_ORGANISMS):
+    for i in range(NUMERO_DE_INDIVIDUOS):
         if( orgs[i]["fitness"] > best["fitness"] ):
             best = orgs[i]
     return best
 
-def nsga2_main_loop( origin, clients ):
-    #Create a combined population with parents and sibblings
-        #Create roulette and generate sibblings
-    #Rank and sort the created set with the performance on defined target indicators
-        #Sort using domination: get a list for every solution that list should contain
-        #which solutions are dominated by the current solution and we should also
-        #have a counter of how many solutions dominate the current one
+def nsga(poblacion):
+# función que realiza el ciclo o la generación de la población según el método MOEA NSGA
+    # VERIFICAR QUE LA POBLACIÓN VAYA PASANDO ENTRE FUNCIONES POR REFERENCIA O CAMBIAR A POR VALOR !!!!!!!!
+    generacion = 1
+    # mientras no se cumpla la condición de parada. Cada ciclo del while es una generación
+    while(not condicion_parada(generacion)):
+        # realizamos el ranking de frentes para clasificar a la población y darles un fitness
+        ranking_de_frentes(poblacion)
+        # ordenamos a la población de acuerdo a su fitness
+        ordenar_poblacion_por_fitness(poblacion)
+        # Mostramos al mejor individuo de la generación actual
+        print('generacion {}: Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
+        # procedemos a la selección y reproducción:
+        nueva_generacion = []
+        # primero elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
+        nueva_generacion = seleccion_elitista(poblacion)
+        # luego realizamos crossover para completar los individuos de la nueva generación
+        nueva_generacion += reproduccion_crossover(poblacion)
+        # por último mutamos con cierta probabilidad un porcentaje de la nueva población
+        mutacion(nueva_generacion)
+        # luego incrementamos el número de generación
+        generacion += 1
+        
+    # finalmente mostramos al mejor individuo final
+    print('generacion {} (FINAL): Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion-1,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
 
-        #once we have that set, all the solutions that arent dominated by any other
-        #are the rank1 - Front1, then all the ones that are dominated just by
-        #Front1 solutions are front2, and you make that iteration over and over again
+def condicion_parada(generacion):
+# función donde pondremos las condiciones para que el ciclo NSGA se detenga
+    parada = False
+    # primera condición: cantidad de iteraciones
+    if (generacion > MAX_GENERATION_NUMBER):
+        parada = True
+    return parada
 
-    #Take best members and create new population 
-        #We take solutions(individuals) from the 3 first fronts(ranks) and to fill up the
-        #rest we us CROWDING DISTANCE SORTIG:  
-    
-    ##THIS BELOW IS AN EASIER IMPLEMENTATION TO USE MEANWHILE
-    generation_count = 0
-    orgs = inicializar_poblacion(clients)
-    while( generation_count < MAX_GENERATION_NUMBER ):
-        perfect_generation = evaluate_organisms(orgs, origin, clients)
-        best = get_best_from_orgs(orgs)
-        print ("{:<8} {:<20} {:<15} {:<15}".format(generation_count, get_total_fitness(orgs), get_avg_from_orgs(orgs), best["fitness"] ), best["genes"] )
-        orgs = produce_next_generation(orgs)
-        generation_count+=1
 
 def main():
     data = read_file("vrptw_c101.txt");
@@ -218,18 +249,15 @@ def main():
     poblacion = inicializar_poblacion(depot_data, clients_data)
     
     # dibujar_frente_pareto(poblacion)
-    
-    ranking_de_frentes(poblacion)
 
-    for individuo in poblacion:
-        print('individuo:')
-        print(individuo.fitness)
-        # get_fitness_objetivos retorna el valor de las funciones objetivo
-        print(individuo.get_fitness_objetivos())
-        print(individuo.get_ruta())
-    
-    #final_generation = nsga2_main_loop( depot_data,  clients_data)
-    #print(orgs[0])
+    nsga(poblacion)
+
+    # for individuo in poblacion:
+    #     print('individuo:')
+    #     print(individuo.fitness)
+    #     # get_fitness_objetivos retorna el valor de las funciones objetivo
+    #     print(individuo.get_fitness_objetivos())
+    #     print(individuo.get_ruta())
 
 main()
 
