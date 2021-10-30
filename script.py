@@ -86,7 +86,7 @@ def ranking_de_frentes(poblacion):
         # for ind in nuevo_frente:
         #     print(dict_individual_number[ind])
         poblacion_en_frentes.append( nuevo_frente )
-
+    
 def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
 # mientras los individuos en un frente pareto sean < que la población total significa que no se han clasificado todos los individuos
     # print('termina? {}'.format(not(len(poblacion) > len(poblacion_en_frentes))))
@@ -95,41 +95,25 @@ def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
 def calcular_frente(poblacion_actual, front):
 # función que calcula el frente pareto de la población actual
     nuevo_frente = []
-    # borrar luego
-    nuevo_frente_2 = []
     for individuo in poblacion_actual:
         es_dominado = False
-        # prueba, luego borrar
-        domina = True
         for individuo_comp in poblacion_actual:
             # si algun elemento es mejor (menor por ser minimización) en ambos fitness objetivo entonces este individuo es dominado
             if (individuo_comp.cantidad_vehiculos < individuo.cantidad_vehiculos and individuo_comp.tiempo_total_vehiculos < individuo.tiempo_total_vehiculos):
                 es_dominado = True 
-            # borrar luego
-            if not verificar_si_domina(individuo,individuo_comp):
-                domina = False
         # si el individuo es no dominado
         if es_dominado == False:
             # lo asignamos al frente pareto
             nuevo_frente.append(individuo)
             # luego calculamos su fitness
-            # IMPLEMENTAR FUNCION CALCULAR FITNESS!!!!!!!!!!
-            #individuo.calcular_fitness(front ,nuevo_frente) # también debemos hacer la degradación de nicho
-        # borrar luego
-        if domina == True:
-            print('entra alguna vez')
-            nuevo_frente_2.append(individuo)
-    if (nuevo_frente == nuevo_frente_2):
-        print('frentes iguales')
-    else:
-        print('frentes diferentes {} y {}'.format(len(nuevo_frente),len(nuevo_frente_2)))
+            individuo.calcular_fitness_final(front ,nuevo_frente) # también debemos hacer la degradación de nicho
     # quitamos los elementos de la poblacion actual que ya están en el frente
     poblacion_actual = [item for item in poblacion_actual if item not in nuevo_frente]
 
     return nuevo_frente, poblacion_actual
 
-# borrar luego
 def verificar_si_domina(individuo, individuo_comp):
+# función para verificar si un individuo domina sobre otro (funcion en desuso)
     domina = False
     indcv = individuo.cantidad_vehiculos    
     indtv = individuo.tiempo_total_vehiculos
@@ -142,7 +126,6 @@ def verificar_si_domina(individuo, individuo_comp):
             domina = False;
     return domina
 
-
 def dibujar_frente_pareto(poblacion):
 # función para graficar el frente pareto teniendo como eje x a F1(cant vehiculos) y como eje y a F2(tiempo total vehiculos)
 # Para guardar el gráfico, llamar solo a esta función en main y ejecutamos el comando: python script.py > matriz.txt
@@ -150,8 +133,8 @@ def dibujar_frente_pareto(poblacion):
     matriz = [[' ' for col in range(100)] for row in range(100)]
     # recorremos todos los individuos de la población
     for i in range(0,len(poblacion)):
-        cant_vehiculos = poblacion[i].get_fitness()[0]
-        tiempo_total = poblacion[i].get_fitness()[1]
+        cant_vehiculos = poblacion[i].get_fitness_objetivos()[0]
+        tiempo_total = poblacion[i].get_fitness_objetivos()[1]
         # convertimos el rango [21000,27000] a [0,100]
         tiempo_total = int (((tiempo_total - 20000)/(30000 -21000) ) * 100)
         # ahora cargamos en la matriz
@@ -234,13 +217,16 @@ def main():
     depot_data = data[0]
     poblacion = inicializar_poblacion(depot_data, clients_data)
     
-    dibujar_frente_pareto(poblacion)
+    # dibujar_frente_pareto(poblacion)
     
     ranking_de_frentes(poblacion)
 
-    # for individuo in poblacion:
-    #     print(individuo.get_fitness())
-    #     print(individuo.get_ruta())
+    for individuo in poblacion:
+        print('individuo:')
+        print(individuo.fitness)
+        # get_fitness_objetivos retorna el valor de las funciones objetivo
+        print(individuo.get_fitness_objetivos())
+        print(individuo.get_ruta())
     
     #final_generation = nsga2_main_loop( depot_data,  clients_data)
     #print(orgs[0])

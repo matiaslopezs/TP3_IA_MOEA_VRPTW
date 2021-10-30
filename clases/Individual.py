@@ -91,7 +91,31 @@ class Individual(object):
         
         self.genes = new_genes_valid_time
 
-    def get_fitness(self):
+    def calcular_fitness_final(self, front ,frente_pareto):
+    # función que calcula el fitness final de cada individuo
+        # primero calculamos el fitness según los frentes del ranking de frente
+        dummy_fitness = 100
+        # distancia de máxima tal que los demas elementos dentro degradarán a este elemento
+        # pongo este valor porque el tiempo_total_vehiculos está inicialmente en el rango [20000-28000]
+        fitness_sharing_dist = 1500
+        # de esta manera de acuerdo al frente en el que están tendrán un mayor o menor valor de fitness
+        self.fitness = dummy_fitness/front
+        # ahora realizamos la degradación de nicho o fitness sharing (cuantos más individuos tenga a su alrededor menor fitness)
+        # coordenadas en el frente pareto de este individuo
+        indiv = [self.cantidad_vehiculos, self.tiempo_total_vehiculos]
+        n = 1
+        for ind_vecino in frente_pareto:
+            # coordenadas en el frente Pareto de la función vecina
+            vecino = [ind_vecino.cantidad_vehiculos, ind_vecino.tiempo_total_vehiculos]
+            if (vecino != indiv):
+                if (math.dist( indiv, vecino ) <= fitness_sharing_dist):
+                    n += 1
+        # se produce la degradación en base a la cantidad de vecinos cercanos
+        self.fitness = self.fitness/n
+        # LUEGO EN MI OPINIÓN FALTARÍA PONDERAR EL FITNESS OBTENIDO POR LOS VALORES FITNESS OBJETIVO. 
+        # FORMULA QUE PIENSO APLICAR = FITNESS*(1/OBJ1 + 1/OBJ2). ESPERAR LA RESPUESTA DEL MAIL DEL PROFESOR!
+
+    def get_fitness_objetivos(self):
     # retorna los dos valores de fitness del individuo: cantidad de vehiculos y la suma de los tiempos de cada vehículo
         return self.cantidad_vehiculos, self.tiempo_total_vehiculos
 
