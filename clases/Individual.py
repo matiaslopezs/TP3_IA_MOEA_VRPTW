@@ -21,7 +21,6 @@ class Individual(object):
 
         #guardamos path en el array genes, será un array de números que simbolizan el número del cliente.
         self.genes = path # Genes is an array with the client_number of the clients_data vector
-        self.fitness = 0
 
     def heuristic_repair_and_fitness(self):
     # este algoritmo realiza la reparación heurísitca y al mismo tiempo calcula el fitness con las variables globales:
@@ -97,7 +96,7 @@ class Individual(object):
         dummy_fitness = 100
         # distancia de máxima tal que los demas elementos dentro degradarán a este elemento
         # pongo este valor porque el tiempo_total_vehiculos está inicialmente en el rango [20000-28000]
-        fitness_sharing_dist = 1500
+        fitness_sharing_dist = 500
         # de esta manera de acuerdo al frente en el que están tendrán un mayor o menor valor de fitness
         self.fitness = dummy_fitness/front
         # ahora realizamos la degradación de nicho o fitness sharing (cuantos más individuos tenga a su alrededor menor fitness)
@@ -123,13 +122,24 @@ class Individual(object):
     # retorna la ruta del individuo
         return self.genes
 
+    def normalizar_tiempo(self):
+    # dividiremos el tiempo entre 1000 para que no sea un valor tan lejano a cantidad de vehículos
+        self.tiempo_total_vehiculos /= 1000
+
+    def volver_a_tiempo_verdadero(self):
+    # volvemos al valor original de tiempo multiplicandolo por 1000
+        self.tiempo_total_vehiculos *= 1000
+
     def __init__(self, depot_data, clients_data, max_capacity):
         self.clients_data = clients_data
         self.depot_data = depot_data
         self.max_capacity = max_capacity
+        self.fitness = 0
+        self.genes = []
         # iniciamos esta variable en 1 porque en la función de fitness vamos sumando cada vez que aparece un nuevo vehículo
         # por lo que no se tiene en cuenta el primer vehículo
         self.cantidad_vehiculos = 1;
         self.tiempo_total_vehiculos = 0;
-        self.generate_random_individual()
-        self.heuristic_repair_and_fitness()
+        # comento lo de abajo porque me parece mejor llamarlos fuera del init
+        # self.generate_random_individual()
+        # self.heuristic_repair_and_fitness()
