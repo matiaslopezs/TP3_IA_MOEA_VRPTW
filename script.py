@@ -16,7 +16,7 @@ MAX_GENERATION_NUMBER = 1000
 PROPORCION_ELITISTA = 0.1
 PROPORCION_CROSSOVER = 0.9
 PROPORCION_MUTACION = 0.05 
-MUTATION_RATE= 0.04
+MUTATION_RATE= 0.02
 # variable global diccionario para mapear individuos a sus indices
 dict_individual_number = {}
 
@@ -149,6 +149,7 @@ def mutacion(poblacion):
 # función que agarra a la población de la nueva generación y tiene cierta probabilidad de mutar algunos de sus genes
     # first we calculate the amount of elements to be mutated
     cant = math.ceil(PROPORCION_MUTACION * len(poblacion))
+    print("cantidad de individuos a mutar: {}".format(cant))
     # then we choose those elements
     for i in range(0,cant):
         indiv = random.choice(poblacion)
@@ -156,13 +157,20 @@ def mutacion(poblacion):
         size = len(indiv.get_ruta())
         for g in range(size):
             if( random.random() <= MUTATION_RATE ):
+                # comprobamos que el gen elegido no sea 0 y si es elegimos el gen anterior
+                if indiv.get_ruta()[g] == 0:
+                    g-=1
                 # if there will be a mutation we choose another gen index and we swap both
                 swap = random.randint(0,size-1)
-                while swap == g:
+                # volvemos a elegir otro gen al azar hasta que el gen swap sea diferente al gen g y el gen swap no sea 0
+                while swap == g or indiv.get_ruta()[swap] == 0:
                     swap = random.randint(0,size-1)
-                # print(indiv[g],indiv[swap])
+                print("mutación en individuo {}: {}={}>".format(indiv,indiv.get_ruta()[g],indiv.get_ruta()[swap]))
                 # DEBO COMPROBAR QUE EN LA POBLACIÓN FINAL ESTÉN LOS INDIVIDUOS MUTADOS !!!!!!!!
                 indiv.get_ruta()[g],indiv.get_ruta()[swap] = indiv.get_ruta()[swap],indiv.get_ruta()[g]
+        # luego de realizar la mutación debemos aplicar las correcciones heurísticas para validar las nuevas rutas del individuo
+        indiv.heuristic_repair_and_fitness()
+
 
 def reproduccion_crossover(poblacion):
 # función que realiza la reproducción de individuos mediante crossover. Previamente elige cada par con la ruleta
@@ -200,12 +208,9 @@ def get_total_fitness(poblacion):
 def get_avg_from_orgs(orgs):
     return get_total_fitness(orgs) / NUMERO_DE_INDIVIDUOS
 
-def get_best_from_orgs(orgs):
-    best = orgs[0]
-    for i in range(NUMERO_DE_INDIVIDUOS):
-        if( orgs[i]["fitness"] > best["fitness"] ):
-            best = orgs[i]
-    return best
+def son_individuos_iguales(individuo1, individuo2):
+# compara las rutas de dos individuos y retorna true si son iguales
+    return individuo1.get_ruta() == individuo2.get_ruta()
 
 def nsga(poblacion):
 # función que realiza el ciclo o la generación de la población según el método MOEA NSGA
@@ -221,15 +226,16 @@ def nsga(poblacion):
         print('generacion {}: Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
         # procedemos a la selección y reproducción:
         nueva_generacion = []
+        # nueva_generacion = copy.deepcopy(poblacion)
         # primero elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
         nueva_generacion = seleccion_elitista(poblacion)
         # luego realizamos crossover para completar los individuos de la nueva generación
-        nueva_generacion += reproduccion_crossover(poblacion)
+        # DESCOMENTAR LO DE ABAJO !!!!!!!!!
+        # nueva_generacion += reproduccion_crossover(poblacion)
         # por último mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
         # luego incrementamos el número de generación
         generacion += 1
-        
     # finalmente mostramos al mejor individuo final
     print('generacion {} (FINAL): Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion-1,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
 
@@ -237,7 +243,8 @@ def condicion_parada(generacion):
 # función donde pondremos las condiciones para que el ciclo NSGA se detenga
     parada = False
     # primera condición: cantidad de iteraciones
-    if (generacion > MAX_GENERATION_NUMBER):
+    #if (generacion > MAX_GENERATION_NUMBER):
+    if (generacion > 1): # PROVISIONALMENTE ESTÁ ESTO PARA LAS PRUEBAS!!!!!
         parada = True
     return parada
 
@@ -251,7 +258,7 @@ def main():
     # dibujar_frente_pareto(poblacion)
 
     nsga(poblacion)
-
+    
     # for individuo in poblacion:
     #     print('individuo:')
     #     print(individuo.fitness)
