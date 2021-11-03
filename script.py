@@ -149,7 +149,7 @@ def mutacion(poblacion):
 # función que agarra a la población de la nueva generación y tiene cierta probabilidad de mutar algunos de sus genes
     # first we calculate the amount of elements to be mutated
     cant = math.ceil(PROPORCION_MUTACION * len(poblacion))
-    print("cantidad de individuos a mutar: {}".format(cant))
+    # print("cantidad de individuos a mutar: {}".format(cant))
     # then we choose those elements
     for i in range(0,cant):
         indiv = random.choice(poblacion)
@@ -165,23 +165,82 @@ def mutacion(poblacion):
                 # volvemos a elegir otro gen al azar hasta que el gen swap sea diferente al gen g y el gen swap no sea 0
                 while swap == g or indiv.get_ruta()[swap] == 0:
                     swap = random.randint(0,size-1)
-                print("mutación en individuo {}: {}={}>".format(indiv,indiv.get_ruta()[g],indiv.get_ruta()[swap]))
+                # print("mutación en individuo {}: {}={}>".format(indiv,indiv.get_ruta()[g],indiv.get_ruta()[swap]))
                 # DEBO COMPROBAR QUE EN LA POBLACIÓN FINAL ESTÉN LOS INDIVIDUOS MUTADOS !!!!!!!!
                 indiv.get_ruta()[g],indiv.get_ruta()[swap] = indiv.get_ruta()[swap],indiv.get_ruta()[g]
         # luego de realizar la mutación debemos aplicar las correcciones heurísticas para validar las nuevas rutas del individuo
         indiv.heuristic_repair_and_fitness()
 
 
-def reproduccion_crossover(poblacion):
+def reproduccion_crossover_cxOrdered(poblacion):
 # función que realiza la reproducción de individuos mediante crossover. Previamente elige cada par con la ruleta
     # next_generation = copy.deepcopy(organisms)
     nueva_generacion = []
     # repetir mientras el tamaño de la nueva generación sea menor a la proporcion de sucesores que debe generar el crossover
-    while(len(nueva_generacion) < ( NUMERO_DE_INDIVIDUOS * PROPORCION_CROSSOVER)):
+    # while(len(nueva_generacion) < ( NUMERO_DE_INDIVIDUOS * PROPORCION_CROSSOVER)):
+    # reemplazar por el while de verdad !!!!
+    i = 0
+    while (i < 1):
+        i = 1
         # elegimos un padre y una madre con la técnica de la ruleta
-        padre = get_parent_usando_ruleta(poblacion)
-        madre = get_parent_usando_ruleta(poblacion)
-        break
+        # padre = get_parent_usando_ruleta(poblacion)
+        # madre = get_parent_usando_ruleta(poblacion)
+        # # cargamos las rutas sin los ceros
+        # ruta_padre = []
+        # for gen in padre.get_ruta():
+        #     if gen != 0:
+        #         ruta_padre.append(gen)
+        # ruta_madre = []
+        # for gen in madre.get_ruta():
+        #     if gen != 0:
+        #         ruta_madre.append(gen)
+        # para testing, borrar luego !!!!!
+        ruta_padre = [9,8,4,5,6,7,1,3,2,10]
+        ruta_madre = [8,7,1,2,3,10,9,5,4,6]
+        # borrar hasta acá !!!!
+        ruta_padre = [x-1 for x in ruta_padre]
+        ruta_madre = [x-1 for x in ruta_madre]
+        print(ruta_padre, ruta_madre)
+        # elegimos dos puntos de corte al azar
+        lon = min(len(ruta_madre),len(ruta_padre))
+        p1, p2 = random.sample(range(lon), 2)
+        # verificamos que p1 sea menor a p2 para poder realizar los cortes
+        p1, p2 = 3,5
+        # descomentar el if de abajo y borrar la sentencia de arriba !!!!
+        # if p1 > p2:
+        #     p1, p2 = p2, p1
+        # print(p1, p2)
+        # ahora realizamos los cortes creando dos vectores hoyo con False donde corresponda a los hoyos
+        hoyo1, hoyo2 = [True]*lon, [True]*lon
+        for i in range(lon):
+            if i < p1 or i > p2:
+                # acá marcamos que valores van a venir del otro progenitor
+                hoyo1[ruta_madre[i]] = False
+                hoyo2[ruta_padre[i]] = False
+        print(hoyo1, hoyo2)
+        # guardamos los valores originales en variables temporales
+        temp_padre, temp_madre = ruta_padre, ruta_madre
+        # vamos moviendo a un lado las rutas
+        k1, k2 = p2+1, p2+1
+        for i in range(lon):
+            if not hoyo1[temp_padre[(i+p2+1)%lon]]:
+                ruta_padre[k1%lon] = temp_padre[(i+p2+1) % lon]
+                k1 += 1
+            if not hoyo2[temp_madre[(i+p2+1) % lon]]:
+                ruta_madre[k2%lon] = temp_madre[(i+p2+1) % lon]
+                k2 += 1
+            print(ruta_padre,ruta_madre)
+        # luego hacemos swap de los contenidos entre p1 y p2 (incluidos)
+        for i in range(p1, p2+1):
+            ruta_padre[i], ruta_madre[i] = ruta_madre[i], ruta_padre[i]
+        print("final")
+        print (ruta_padre, ruta_madre)
+        # volvemos a sumar 1 a los valores que restamos 1
+        ruta_padre = [x+1 for x in ruta_padre]
+        ruta_madre = [x+1 for x in ruta_madre]
+        print (ruta_padre, ruta_madre)
+        #!!!!! FALTA VALIDAR RUTAS, VOLVER A AÑADIR AL INDIVIDUO Y AÑADIR A LA NUEVA GENERACIÓN
+        
     return nueva_generacion
 
 def get_parent_usando_ruleta(poblacion):
@@ -230,8 +289,9 @@ def nsga(poblacion):
         # primero elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
         nueva_generacion = seleccion_elitista(poblacion)
         # luego realizamos crossover para completar los individuos de la nueva generación
-        # DESCOMENTAR LO DE ABAJO !!!!!!!!!
-        # nueva_generacion += reproduccion_crossover(poblacion)
+        nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
+        # para comprobar que esté bien imprimiremos el tamañao de la nueva generación
+        print("tamaño de la nueva generación: {}".format(len(nueva_generacion)))
         # por último mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
         # luego incrementamos el número de generación
@@ -257,8 +317,10 @@ def main():
     
     # dibujar_frente_pareto(poblacion)
 
-    nsga(poblacion)
-    
+    #nsga(poblacion)
+    # borrar luego !!!!!!!!!
+    reproduccion_crossover_cxOrdered(poblacion)
+
     # for individuo in poblacion:
     #     print('individuo:')
     #     print(individuo.fitness)
