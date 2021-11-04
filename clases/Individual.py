@@ -22,9 +22,13 @@ class Individual(object):
         #guardamos path en el array genes, será un array de números que simbolizan el número del cliente.
         self.genes = path # Genes is an array with the client_number of the clients_data vector
 
-    def heuristic_repair_and_fitness(self):
+    def heuristic_repair_and_fitness(self, incluir_tiempo_espera):
     # este algoritmo realiza la reparación heurísitca y al mismo tiempo calcula el fitness con las variables globales:
     # self.cantidad_vehiculos y self.tiempo_total_vehiculos.
+        # primeramente inicializamos de nuevo estas variables por si la función corra 2 veces
+        self.cantidad_vehiculos = 1;
+        self.tiempo_total_vehiculos = 0;
+        
         new_genes_valid_capacity = []
         total_cargo = 0
         for client_number in self.genes:
@@ -62,7 +66,10 @@ class Individual(object):
                     if client_to_serve.timepoint_is_before(time): # si llegamos antes, esperamos....
                         
                         # si debe esperar entonces se carga el tiempo de espera + el tiempo de servicio
-                        self.tiempo_total_vehiculos += (client_to_serve.ready_time - time) + client_to_serve.service_time 
+                        if (incluir_tiempo_espera == True):
+                            self.tiempo_total_vehiculos += (client_to_serve.ready_time - time) + client_to_serve.service_time
+                        else:
+                            self.tiempo_total_vehiculos += client_to_serve.service_time 
 
                         time = client_to_serve.ready_time + client_to_serve.service_time
                     else:
@@ -96,7 +103,7 @@ class Individual(object):
         dummy_fitness = 100
         # distancia de máxima tal que los demas elementos dentro degradarán a este elemento
         # pongo este valor porque el tiempo_total_vehiculos está inicialmente en el rango [20000-28000]
-        fitness_sharing_dist = 500
+        fitness_sharing_dist = 20
         # de esta manera de acuerdo al frente en el que están tendrán un mayor o menor valor de fitness
         self.fitness = dummy_fitness/front
         # ahora realizamos la degradación de nicho o fitness sharing (cuantos más individuos tenga a su alrededor menor fitness)
@@ -111,9 +118,10 @@ class Individual(object):
                     n += 1
         # se produce la degradación en base a la cantidad de vecinos cercanos
         self.fitness = self.fitness/n
-        # LUEGO EN MI OPINIÓN FALTARÍA PONDERAR EL FITNESS OBTENIDO POR LOS VALORES FITNESS OBJETIVO. 
-        # FORMULA QUE PIENSO APLICAR = FITNESS*(1/OBJ1 + 1/OBJ2). ESPERAR LA RESPUESTA DEL MAIL DEL PROFESOR!
-
+        # Aporte personal: Multiplicar valor de fitness por la sumatoria de las inversas de las funciones objetivo
+        # self.fitness = self.fitness * (1/self.cantidad_vehiculos + 1/(self.tiempo_total_vehiculos/100))
+        # print('indiv: {}, fitness {}, dummy fit {}, front {}, n {}'.format(self.get_fitness_objetivos(), self.fitness, dummy_fitness, front, n))
+        
     def get_fitness_objetivos(self):
     # retorna los dos valores de fitness del individuo: cantidad de vehiculos y la suma de los tiempos de cada vehículo
         return self.cantidad_vehiculos, self.tiempo_total_vehiculos
@@ -124,11 +132,11 @@ class Individual(object):
 
     def normalizar_tiempo(self):
     # dividiremos el tiempo entre 1000 para que no sea un valor tan lejano a cantidad de vehículos
-        self.tiempo_total_vehiculos /= 1000
+        self.tiempo_total_vehiculos /= 100
 
     def volver_a_tiempo_verdadero(self):
     # volvemos al valor original de tiempo multiplicandolo por 1000
-        self.tiempo_total_vehiculos *= 1000
+        self.tiempo_total_vehiculos *= 100
 
     def __init__(self, depot_data, clients_data, max_capacity):
         self.clients_data = clients_data

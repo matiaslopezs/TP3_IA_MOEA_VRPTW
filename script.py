@@ -15,10 +15,11 @@ NUMERO_DE_INDIVIDUOS = 100
 MAX_GENERATION_NUMBER = 1000
 PROPORCION_ELITISTA = 0.15
 PROPORCION_CROSSOVER = 0.85
-PROPORCION_MUTACION = 0
-MUTATION_RATE= 0.0002
-# variable global diccionario para mapear individuos a sus indices
-dict_individual_number = {}
+PROPORCION_MUTACION = 0.05
+MUTATION_RATE= 0.0005
+INCLUIR_TIEMPO_ESPERA = False # Cambiar este para controlar si incluir a la distancia total (en tiempo) el tiempo que cada vehículo espera al llegar temprano
+dict_individual_number = {} # variable global diccionario para mapear individuos a sus indices
+
 
 def read_file(file_location_path):
 # función para leer el archivo y procesar para que pueda ser utilizado
@@ -53,7 +54,7 @@ def inicializar_poblacion(depot_data, clients_data):
         indiv = Individual(depot_data, clients_data, CAPACITY)
         # generamos su ruta de manera aleatoria, luego hacemos la reperación heurísitca a la ruta para que sea valida
         indiv.generate_random_individual()
-        indiv.heuristic_repair_and_fitness()
+        indiv.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
         # lo agregamos a la población
         poblacion.append(indiv)
 
@@ -65,7 +66,7 @@ def ranking_de_frentes(poblacion):
     poblacion_actual = poblacion
     poblacion_en_frentes = []
     # mientras todos los individuos no pertenezcan a un frente
-    while(poblacion_no_clasificada(poblacion_actual, poblacion_en_frentes)):
+    while(poblacion_no_clasificada(poblacion, poblacion_en_frentes)):
         # se creará un nuevo frente pareto para clasificar individuos
         front+= 1
         # calculamos un nuevo frente
@@ -73,7 +74,8 @@ def ranking_de_frentes(poblacion):
         # print('frente {}'.format(front))
         # for ind in nuevo_frente:
         #     print(dict_individual_number[ind])
-        poblacion_en_frentes.append( nuevo_frente )
+        poblacion_en_frentes += nuevo_frente
+    
     
 def poblacion_no_clasificada(poblacion, poblacion_en_frentes):
 # mientras los individuos en un frente pareto sean < que la población total significa que no se han clasificado todos los individuos
@@ -93,8 +95,9 @@ def calcular_frente(poblacion_actual, front):
         if es_dominado == False:
             # lo asignamos al frente pareto
             nuevo_frente.append(individuo)
-            # luego calculamos su fitness
-            individuo.calcular_fitness_final(front ,nuevo_frente) # también debemos hacer la degradación de nicho
+    # luego calculamos el fitness de cada individuo en el frente calculado recientemente
+    for indiv_en_frente in nuevo_frente:
+        indiv_en_frente.calcular_fitness_final(front ,nuevo_frente) # también debemos hacer la degradación de nicho
     # quitamos los elementos de la poblacion actual que ya están en el frente
     poblacion_actual = [item for item in poblacion_actual if item not in nuevo_frente]
 
@@ -109,7 +112,7 @@ def verificar_si_domina(individuo, individuo_comp):
     ictv = individuo_comp.tiempo_total_vehiculos
     if (indcv <= iccv and indtv <= ictv ):
         if (indcv < iccv or indtv < ictv):
-            domina = True ;
+            domina = True;
         else:
             domina = False;
     return domina
@@ -173,7 +176,7 @@ def mutacion(poblacion):
                 # print("mutación en individuo {}: {}={}>".format(indiv,indiv.get_ruta()[g],indiv.get_ruta()[swap]))
                 indiv.get_ruta()[g],indiv.get_ruta()[swap] = indiv.get_ruta()[swap],indiv.get_ruta()[g]
         # luego de realizar la mutación debemos aplicar las correcciones heurísticas para validar las nuevas rutas del individuo
-        indiv.heuristic_repair_and_fitness()
+        indiv.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
 
 
 def reproduccion_crossover_cxOrdered(poblacion):
@@ -182,25 +185,26 @@ def reproduccion_crossover_cxOrdered(poblacion):
     data = read_file("vrptw_c101.txt");
     clients_data = data[1:]
     depot_data = data[0]
-    # next_generation = copy.deepcopy(organisms)
     nueva_generacion = []
     # repetir mientras el tamaño de la nueva generación sea menor a la proporcion de sucesores que debe generar el crossover
     while(len(nueva_generacion) < ( NUMERO_DE_INDIVIDUOS * PROPORCION_CROSSOVER)):
         # elegimos un padre y una madre con la técnica de la ruleta
         padre = get_parent_usando_ruleta(poblacion)
         madre = get_parent_usando_ruleta(poblacion)
+        # padre = random.choice(poblacion)
+        # madre = random.choice(poblacion)
         # cargamos las rutas sin los ceros
-        ruta_padre = []
+        ruta_padre_raw = []
         for gen in padre.get_ruta():
             if gen != 0:
-                ruta_padre.append(gen)
-        ruta_madre = []
+                ruta_padre_raw.append(gen)
+        ruta_madre_raw = []
         for gen in madre.get_ruta():
             if gen != 0:
-                ruta_madre.append(gen)
+                ruta_madre_raw.append(gen)
         # restamos un valor a todos para poder utilizarlos de indice. Si son 100 elementos que vaya de 0 a 99
-        ruta_padre = [x-1 for x in ruta_padre]
-        ruta_madre = [x-1 for x in ruta_madre]
+        ruta_padre = [x-1 for x in ruta_padre_raw]
+        ruta_madre = [x-1 for x in ruta_madre_raw]
         # elegimos dos puntos de corte al azar
         lon = min(len(ruta_madre),len(ruta_padre))
         p1, p2 = random.sample(range(lon), 2)
@@ -236,7 +240,7 @@ def reproduccion_crossover_cxOrdered(poblacion):
         hijo1 = Individual(depot_data,clients_data, CAPACITY)
         hijo1.genes = ruta_padre
         # realizamos las reparaciones heuristicas a al primera ruta
-        hijo1.heuristic_repair_and_fitness()
+        hijo1.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
         # por último añadimos los dos hijos a la población de la nueva generación
         nueva_generacion.append(hijo1)
         # para el segundo hijo debemos primero tener en cuenta que no se esté poniendo individuos de más
@@ -244,7 +248,7 @@ def reproduccion_crossover_cxOrdered(poblacion):
             hijo2 = Individual(depot_data,clients_data, CAPACITY)
             hijo2.genes = ruta_madre
             # realizamos las reparaciones heuristicas a al segunda ruta
-            hijo2.heuristic_repair_and_fitness()
+            hijo2.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
             # lo añadimos a la 2da generación
             nueva_generacion.append(hijo2)
         
@@ -262,7 +266,6 @@ def get_parent_usando_ruleta(poblacion):
         sumatoria_actual += poblacion[i].fitness
         #hasta llegar o superar al punto random elegido entonces retornamos el individuo que llegó a ese punto
         if sumatoria_actual >= random_select_point:
-            # print(poblacion[i], sumatoria_actual, random_select_point)
             return poblacion[i]
 
 def get_total_fitness(poblacion):
@@ -284,29 +287,40 @@ def nsga(poblacion):
     generacion = 1
     # mientras no se cumpla la condición de parada. Cada ciclo del while es una generación
     while(not condicion_parada(generacion)):
-        # los valores de tiempo son muy grandes por lo que los dividimos entre 1000 para acercarlos a los valores de cantidad de vehiculos
-        # AUN SIN IMPLEMENTAR EL COMENTARIO DE ARRIBA !!!
+        # # los valores de tiempo son muy grandes por lo que los dividimos entre 1000 para acercarlos a los valores de cantidad de vehiculos
+        # for ind in poblacion:
+        #     ind.normalizar_tiempo()
         # realizamos el ranking de frentes para clasificar a la población y darles un fitness
         ranking_de_frentes(poblacion)
         # ordenamos a la población de acuerdo a su fitness
         ordenar_poblacion_por_fitness(poblacion)
+        # # volvemos la población a su valor de tiempo verdadero
+        # for ind in poblacion:
+        #     ind.volver_a_tiempo_verdadero()
         # Mostramos al mejor individuo de la generación actual
         print('generacion {}: Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
         # procedemos a la selección y reproducción:
         nueva_generacion = []
         # nueva_generacion = copy.deepcopy(poblacion)
-        # primero elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
-        nueva_generacion = seleccion_elitista(poblacion)
-        # luego realizamos crossover para completar los individuos de la nueva generación
-        nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
-        # por último mutamos con cierta probabilidad un porcentaje de la nueva población
+        # primero realizamos crossover para generar los individuos de la nueva generación
+        nueva_generacion = reproduccion_crossover_cxOrdered(poblacion)
+        # luego mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
+        # por último elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
+        nueva_generacion += seleccion_elitista(poblacion)
         # luego incrementamos el número de generación
         generacion += 1
-        # pasamos la nueva generación a la población actual
+        # pasamos la nueva generación a la población actual (haciendo un deep copy)
         poblacion = nueva_generacion
+    # al terminar el while debemos calcular el ranking de frentes de la última nueva generación y ordenar por fitness
+    ranking_de_frentes(poblacion)
+    ordenar_poblacion_por_fitness(poblacion)
+    print('the final population')
+    for ind in poblacion:
+        print(ind.get_fitness_objetivos(), ind.fitness)
     # finalmente mostramos al mejor individuo final
     print('generacion {} (FINAL): Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion-1,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
+
 
 def condicion_parada(generacion):
 # función donde pondremos las condiciones para que el ciclo NSGA se detenga
@@ -323,9 +337,11 @@ def main():
     depot_data = data[0]
     poblacion = inicializar_poblacion(depot_data, clients_data)
     
-    # dibujar_frente_pareto(poblacion)
+    dibujar_frente_pareto(poblacion)
 
     nsga(poblacion)
+
+    dibujar_frente_pareto(poblacion)
 
     # for individuo in poblacion:
     #     print('individuo:')
