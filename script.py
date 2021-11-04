@@ -88,8 +88,8 @@ def calcular_frente(poblacion_actual, front):
     for individuo in poblacion_actual:
         es_dominado = False
         for individuo_comp in poblacion_actual:
-            # si algun elemento es mejor (menor por ser minimización) en ambos fitness objetivo entonces este individuo es dominado
-            if (individuo_comp.cantidad_vehiculos < individuo.cantidad_vehiculos and individuo_comp.tiempo_total_vehiculos < individuo.tiempo_total_vehiculos):
+            # si el individuo con el que estamos comparando domina a nuestro individuo entonces ponemos en true la bandera
+            if verificar_si_domina(individuo_comp, individuo):
                 es_dominado = True 
         # si el individuo es no dominado
         if es_dominado == False:
@@ -103,13 +103,13 @@ def calcular_frente(poblacion_actual, front):
 
     return nuevo_frente, poblacion_actual
 
-def verificar_si_domina(individuo, individuo_comp):
-# función para verificar si un individuo domina sobre otro (funcion en desuso)
+def verificar_si_domina(individuo_A, individuo_B):
+# función para verificar si un individuo domina sobre otro
     domina = False
-    indcv = individuo.cantidad_vehiculos    
-    indtv = individuo.tiempo_total_vehiculos
-    iccv = individuo_comp.cantidad_vehiculos
-    ictv = individuo_comp.tiempo_total_vehiculos
+    indcv = individuo_A.cantidad_vehiculos    
+    indtv = individuo_A.tiempo_total_vehiculos
+    iccv = individuo_B.cantidad_vehiculos
+    ictv = individuo_B.tiempo_total_vehiculos
     if (indcv <= iccv and indtv <= ictv ):
         if (indcv < iccv or indtv < ictv):
             domina = True;
@@ -191,6 +191,9 @@ def reproduccion_crossover_cxOrdered(poblacion):
         # elegimos un padre y una madre con la técnica de la ruleta
         padre = get_parent_usando_ruleta(poblacion)
         madre = get_parent_usando_ruleta(poblacion)
+        # comprobamos que no sea el mismo individuo
+        while padre == madre:
+            madre = get_parent_usando_ruleta(poblacion)
         # padre = random.choice(poblacion)
         # madre = random.choice(poblacion)
         # cargamos las rutas sin los ceros
@@ -337,11 +340,9 @@ def main():
     depot_data = data[0]
     poblacion = inicializar_poblacion(depot_data, clients_data)
     
-    dibujar_frente_pareto(poblacion)
+    # dibujar_frente_pareto(poblacion)
 
     nsga(poblacion)
-
-    dibujar_frente_pareto(poblacion)
 
     # for individuo in poblacion:
     #     print('individuo:')
