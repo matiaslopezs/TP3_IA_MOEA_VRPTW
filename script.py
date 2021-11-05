@@ -7,18 +7,18 @@ import math
 from clases.ClientData import ClientData
 from clases.Individual import Individual
 
-# VERIFICAR QUE LA MUTACION HAGA ALGO, VER POR QUÉ EL CROSSOVER GENERA REPETIDOS, RESOLVER TEMA DE DISTANCIA
+# IMPLEMENTAR CONTROL DE REPETIDOS, VER POR QUÉ LA DEGRADACIÓN DE NICHO AFECTA AL CROSSOVER CUANDO ES 1
 
 # los tres primeros datos serán cargados al leer el archivo
 CAPACITY = 0
 N_CLIENTS = 0
 NUMBER_OF_GENES =0
 NUMERO_DE_INDIVIDUOS = 100
-MAX_GENERATION_NUMBER = 100
-PROPORCION_ELITISTA = 0
-PROPORCION_CROSSOVER = 1
-PROPORCION_MUTACION = 0
-MUTATION_RATE= 0.0002
+MAX_GENERATION_NUMBER = 2000
+PROPORCION_ELITISTA = 0.15
+PROPORCION_CROSSOVER = 0.85
+PROPORCION_MUTACION = 0.02 # porcentaje de individuos de cada genración expuestos a la mutación
+MUTATION_RATE= 0.002 # probabilidad de mutación
 INCLUIR_TIEMPO_ESPERA = False # Cambiar este para controlar si incluir a la distancia total (en tiempo) el tiempo que cada vehículo espera al llegar temprano
 dict_individual_number = {} # variable global diccionario para mapear individuos a sus indices
 
@@ -291,34 +291,66 @@ def son_individuos_iguales(individuo1, individuo2):
 # compara las rutas de dos individuos y retorna true si son iguales
     return individuo1.get_ruta() == individuo2.get_ruta()
 
+def controlar_repetidos(poblacion):
+# función que se encarga de eliminar un elemento si se encuentra repetido más de 2 veces en la población y agregar un random en su lugar
+    cant_reps= [ 0 for x in range(100) ]
+    tam_poblacion = len(poblacion)
+    # los for van en reversa para poder ir dando valores de n-1 al último repetido hasta 0 al original 
+    for i in range(tam_poblacion-1,-1,-1):
+        for j in range(0, i, 1,):
+            if son_individuos_iguales(poblacion[i], poblacion[j]):
+                cant_reps[i] +=1
+    
+    # primeramente conseguimos los valores para crear individuos
+    data = read_file("vrptw_c101.txt");
+    clients_data = data[1:]
+    depot_data = data[0]
+    
+    # ahora a todos los elementos repetidos serán reemplazados por individuos random
+    for i in range(len(cant_reps)):
+        # si es un repetido
+        if cant_reps[i] > 0:
+            # generamos un nuevo individuo random
+            indiv = Individual(depot_data, clients_data, CAPACITY)
+            indiv.generate_random_individual()
+            indiv.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
+            # insertamos el nuevo individuo random en su posición
+            poblacion[i] = indiv
+    # print(cant_reps)
+
+# BORRAR TB !!!
+def controlar_repetidos_tmp(poblacion):
+# función que se encarga de eliminar un elemento si se encuentra repetido más de 2 veces en la población y agregar un random en su lugar
+    cant_reps = 0
+    tam_poblacion = len(poblacion)
+    # los for van en reversa
+    for i in range(tam_poblacion):
+        for j in range(tam_poblacion):
+            if i != j and son_individuos_iguales(poblacion[i], poblacion[j]):
+                cant_reps +=1
+    print(cant_reps)
+
 def nsga(poblacion):
 # función que realiza el ciclo o la generación de la población según el método MOEA NSGA
+
+    # BORRAR POR FAVOR !!!!!!
+    aber = []
+
     generacion = 1
     # mientras no se cumpla la condición de parada. Cada ciclo del while es una generación
     while(not condicion_parada(generacion)):
-        # # los valores de tiempo son muy grandes por lo que los dividimos entre 1000 para acercarlos a los valores de cantidad de vehiculos
-        # for ind in poblacion:
-        #     ind.normalizar_tiempo()
         # realizamos el ranking de frentes para clasificar a la población y darles un fitness
         ranking_de_frentes(poblacion)
         # ordenamos a la población de acuerdo a su fitness
         ordenar_poblacion_por_fitness(poblacion)
-
-        # borrar luego !!!
-        # cant_reps=0
-        # for ind in poblacion:
-        #     for ind2 in poblacion:
-        #         if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
-        #             cant_reps +=1
-        #             break
-        # print('cantidad de individuos repetidos (comienzo): {}'.format(cant_reps))
-
-        # # volvemos la población a su valor de tiempo verdadero
-        # for ind in poblacion:
-        #     ind.volver_a_tiempo_verdadero()
         # Mostramos al mejor individuo de la generación actual
         print('generacion {}: Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
         
+        # BORRAR !!!
+        # si un individuo se está repitiendo mucho en la población, entonces eliminarlo y añadir un nuevo individuo aleatorio
+        print('inicialmente')
+        controlar_repetidos_tmp(poblacion)
+
         #BORRAR !!!!
         # for ind in poblacion:
         #     print(ind.get_fitness_objetivos(), ind.fitness)
@@ -330,27 +362,22 @@ def nsga(poblacion):
         nueva_generacion += seleccion_elitista(poblacion)
         # luego realizamos crossover para generar los individuos de la nueva generación
         nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
-        # borrar luego !!!
-        # cant_reps=0
-        # for ind in nueva_generacion:
-        #     for ind2 in nueva_generacion:
-        #         if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
-        #             cant_reps +=1
-        #             break
-        # print('cantidad de individuos repetidos (reproduccion): {}'.format(cant_reps))
+        
+        # BORRAR !!!
+        # si un individuo se está repitiendo mucho en la población, entonces eliminarlo y añadir un nuevo individuo aleatorio
+        print('luego de crossover')
+        controlar_repetidos_tmp(nueva_generacion)
 
         # luego mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
 
-        # borrar luego !!!
-        # cant_reps=0
-        # for ind in nueva_generacion:
-        #     for ind2 in nueva_generacion:
-        #         if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
-        #             cant_reps +=1
-        #             break
-        # print('cantidad de individuos repetidos (mutacion): {}'.format(cant_reps))
+        # BORRAR !!!
+        # si un individuo se está repitiendo mucho en la población, entonces eliminarlo y añadir un nuevo individuo aleatorio
+        print('luego de mutacion')
+        controlar_repetidos_tmp(nueva_generacion)
 
+        # APORTE PERSONAL: si encontramos en una misma población elementos repetidos, entonces los cambiamos por individuos random para favorecer la exploración
+        controlar_repetidos(nueva_generacion)
         # luego incrementamos el número de generación
         generacion += 1
         # pasamos la nueva generación a la población actual (haciendo un deep copy)
@@ -358,6 +385,7 @@ def nsga(poblacion):
     # al terminar el while debemos calcular el ranking de frentes de la última nueva generación y ordenar por fitness
     ranking_de_frentes(poblacion)
     ordenar_poblacion_por_fitness(poblacion)
+    # BORRAR !!!
     print('the final population')
     for ind in poblacion:
         print(ind.get_fitness_objetivos(), ind.fitness)

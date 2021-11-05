@@ -186,7 +186,7 @@ class Individual(object):
         dummy_fitness = 100
         # distancia de máxima tal que los demas elementos dentro degradarán a este elemento
         # pongo este valor porque el tiempo_total_vehiculos está inicialmente en el rango [20000-28000]
-        fitness_sharing_dist = 20
+        fitness_sharing_dist = 30
         # de esta manera de acuerdo al frente en el que están tendrán un mayor o menor valor de fitness
         self.fitness = dummy_fitness/front
         # ahora realizamos la degradación de nicho o fitness sharing (cuantos más individuos tenga a su alrededor menor fitness)
@@ -200,11 +200,7 @@ class Individual(object):
                 if (math.dist( indiv, vecino ) <= fitness_sharing_dist):
                     n += 1
         # se produce la degradación en base a la cantidad de vecinos cercanos
-        # DESCOMETNAR !!!
-        # self.fitness = self.fitness/n
-        # Aporte personal: Multiplicar valor de fitness por la sumatoria de las inversas de las funciones objetivo
-        # self.fitness = self.fitness * (1/self.cantidad_vehiculos + 1/(self.tiempo_total_vehiculos/100))
-        # print('indiv: {}, fitness {}, dummy fit {}, front {}, n {}'.format(self.get_fitness_objetivos(), self.fitness, dummy_fitness, front, n))
+        self.fitness = self.fitness/n
         
     def get_fitness_objetivos(self):
     # retorna los dos valores de fitness del individuo: cantidad de vehiculos y la suma de los tiempos de cada vehículo
