@@ -142,10 +142,12 @@ class Individual(object):
         # llamamos a la función para calcular los valores de las funciones objetivo a optimizar
     
     def calcular_objetivos_a_optimizar(self):
-        self.cantidad_vehiculos = 0
+        self.cantidad_vehiculos = 1
         self.tiempo_total_vehiculos = 0
         
-        ruta = self.get_ruta()
+        # ruta = [20, 21, 52, 49, 47, 0, 67, 65, 63, 62, 74, 72, 61, 64, 68, 66, 69, 0, 5, 3, 7, 8, 9, 6, 4, 1, 75, 0, 24, 25, 27, 28, 26, 23, 22, 2, 91, 0, 43, 42, 41, 40, 44, 45, 48, 50, 0, 10, 11, 100, 99, 89, 0, 29, 30, 36, 34, 0, 90, 87, 86, 88, 79, 80, 0, 46, 51, 0, 57, 55, 54, 53, 56, 58, 60, 59, 0, 13, 17, 18, 19, 15, 16, 14, 12, 0, 98, 96, 95, 94, 93, 97, 85, 0, 32, 33, 31, 35, 37, 38, 39, 0, 83, 82, 84, 77, 0, 81, 78, 76, 71, 70, 73] # self.get_ruta() 
+        ruta = self.get_ruta() 
+        origen = self.depot_data
         # empezamos a recorrer la ruta
         for i in range(len(ruta)):
             # si el destino es el deposito
@@ -154,21 +156,29 @@ class Individual(object):
                 self.cantidad_vehiculos += 1
             else:   
                 destino = self.clients_data[ruta[i]-1]
-            # si es el inicio del camino o el destino es un deposito
-            if i == 0:
-                origen = self.depot_data
-                self.cantidad_vehiculos += 1
-            else:
-                origen = self.clients_data[ruta[i-1]-1]
-            self.tiempo_total_vehiculos += destino.get_distance_to_client(origen)
-
+            # calculamos el costo total en base a las distancias
+            self.tiempo_total_vehiculos += origen.get_distance_to_client(destino)
+            # pasamos el destino para que sea el nuevo origen
+            origen = destino
+        # por último sumamos la última distancia que es del último cliente al deposito
+        self.tiempo_total_vehiculos += origen.get_distance_to_client(self.depot_data)
+        # return self.cantidad_vehiculos, self.tiempo_total_vehiculos
 
     def reparacion_heuristica_y_calculo_objetivos(self, incluir_tiempo_espera):
+        self.quitar_ceros()
         if incluir_tiempo_espera:
             self.heuristic_repair_and_objectives_with_tw()
         else:
             self.heuristic_repair()
             self.calcular_objetivos_a_optimizar()
+
+    def quitar_ceros(self):
+    # función para quitar los ceros de la ruta antes de volver a hacer la reparación heurísitca
+        ruta = self.genes
+        self.genes = []
+        for elemento in ruta:
+            if elemento != 0:
+                self.genes.append(elemento)
 
     def calcular_fitness_final(self, front ,frente_pareto):
     # función que calcula el fitness final de cada individuo
@@ -190,7 +200,8 @@ class Individual(object):
                 if (math.dist( indiv, vecino ) <= fitness_sharing_dist):
                     n += 1
         # se produce la degradación en base a la cantidad de vecinos cercanos
-        self.fitness = self.fitness/n
+        # DESCOMETNAR !!!
+        # self.fitness = self.fitness/n
         # Aporte personal: Multiplicar valor de fitness por la sumatoria de las inversas de las funciones objetivo
         # self.fitness = self.fitness * (1/self.cantidad_vehiculos + 1/(self.tiempo_total_vehiculos/100))
         # print('indiv: {}, fitness {}, dummy fit {}, front {}, n {}'.format(self.get_fitness_objetivos(), self.fitness, dummy_fitness, front, n))

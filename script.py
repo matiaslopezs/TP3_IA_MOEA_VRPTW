@@ -7,7 +7,7 @@ import math
 from clases.ClientData import ClientData
 from clases.Individual import Individual
 
-# VERIFICAR QUE LA MUTACION HAGA ALGO, VER POR QUÉ EL CROSSOVER GENERA REPETIDOS
+# VERIFICAR QUE LA MUTACION HAGA ALGO, VER POR QUÉ EL CROSSOVER GENERA REPETIDOS, RESOLVER TEMA DE DISTANCIA
 
 # los tres primeros datos serán cargados al leer el archivo
 CAPACITY = 0
@@ -17,7 +17,7 @@ NUMERO_DE_INDIVIDUOS = 100
 MAX_GENERATION_NUMBER = 100
 PROPORCION_ELITISTA = 0
 PROPORCION_CROSSOVER = 1
-PROPORCION_MUTACION = 0.005
+PROPORCION_MUTACION = 0
 MUTATION_RATE= 0.0005
 INCLUIR_TIEMPO_ESPERA = False # Cambiar este para controlar si incluir a la distancia total (en tiempo) el tiempo que cada vehículo espera al llegar temprano
 dict_individual_number = {} # variable global diccionario para mapear individuos a sus indices
@@ -150,6 +150,9 @@ def seleccion_elitista(poblacion):
     cant = int(NUMERO_DE_INDIVIDUOS*PROPORCION_ELITISTA)
     # we select the 'cant' amount of elements and append to the sucesors list
     siguiente_generacion = []
+    # ordenamos la población en orden de su fitness
+    ordenar_poblacion_por_fitness(poblacion)
+    # luego copiamos la proporcion
     for ind in range(0,cant):
         siguiente_generacion.append(poblacion[ind])
     
@@ -188,6 +191,7 @@ def reproduccion_crossover_cxOrdered(poblacion):
     clients_data = data[1:]
     depot_data = data[0]
     nueva_generacion = []
+    pares_reproducidos = []
     # repetir mientras el tamaño de la nueva generación sea menor a la proporcion de sucesores que debe generar el crossover
     while(len(nueva_generacion) < ( NUMERO_DE_INDIVIDUOS * PROPORCION_CROSSOVER)):
         # elegimos un padre y una madre con la técnica de la ruleta
@@ -306,6 +310,7 @@ def nsga(poblacion):
             for ind2 in poblacion:
                 if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
                     cant_reps +=1
+                    break
         print('cantidad de individuos repetidos (comienzo): {}'.format(cant_reps))
 
         # # volvemos la población a su valor de tiempo verdadero
@@ -313,20 +318,25 @@ def nsga(poblacion):
         #     ind.volver_a_tiempo_verdadero()
         # Mostramos al mejor individuo de la generación actual
         print('generacion {}: Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
+        
+        #BORRAR !!!!
+        # for ind in poblacion:
+        #     print(ind.get_fitness_objetivos(), ind.fitness)
+        
         # procedemos a la selección y reproducción:
         nueva_generacion = []
         # nueva_generacion = copy.deepcopy(poblacion)
-        # primero realizamos crossover para generar los individuos de la nueva generación
-        nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
-        # luego elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
+        # primero elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
         nueva_generacion += seleccion_elitista(poblacion)
-
+        # luego realizamos crossover para generar los individuos de la nueva generación
+        nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
         # borrar luego !!!
         cant_reps=0
         for ind in nueva_generacion:
             for ind2 in nueva_generacion:
                 if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
                     cant_reps +=1
+                    break
         print('cantidad de individuos repetidos (reproduccion): {}'.format(cant_reps))
 
         # luego mutamos con cierta probabilidad un porcentaje de la nueva población
@@ -338,6 +348,7 @@ def nsga(poblacion):
             for ind2 in nueva_generacion:
                 if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
                     cant_reps +=1
+                    break
         print('cantidad de individuos repetidos (mutacion): {}'.format(cant_reps))
 
         # luego incrementamos el número de generación
@@ -371,8 +382,17 @@ def main():
     
     # dibujar_frente_pareto(poblacion)
 
-    # nsga(poblacion)
+    nsga(poblacion)
 
+    # ind = Individual(depot_data,clients_data,CAPACITY)
+    # ind.generate_random_individual()
+    # ind.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
+    # print(ind.get_ruta())
+    # for i in range(500):
+    #     print('iteracion {}'.format(i))
+    #     ind.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
+    #     print(ind.get_fitness_objetivos())
+    # print(ind.calcular_objetivos_a_optimizar())
     # for individuo in poblacion:
     #     print('individuo:')
     #     print(individuo.fitness)
