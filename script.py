@@ -7,15 +7,17 @@ import math
 from clases.ClientData import ClientData
 from clases.Individual import Individual
 
+# VERIFICAR QUE LA MUTACION HAGA ALGO, VER POR QUÉ EL CROSSOVER GENERA REPETIDOS
+
 # los tres primeros datos serán cargados al leer el archivo
 CAPACITY = 0
 N_CLIENTS = 0
 NUMBER_OF_GENES =0
 NUMERO_DE_INDIVIDUOS = 100
-MAX_GENERATION_NUMBER = 1000
-PROPORCION_ELITISTA = 0.15
-PROPORCION_CROSSOVER = 0.85
-PROPORCION_MUTACION = 0.05
+MAX_GENERATION_NUMBER = 100
+PROPORCION_ELITISTA = 0
+PROPORCION_CROSSOVER = 1
+PROPORCION_MUTACION = 0.005
 MUTATION_RATE= 0.0005
 INCLUIR_TIEMPO_ESPERA = False # Cambiar este para controlar si incluir a la distancia total (en tiempo) el tiempo que cada vehículo espera al llegar temprano
 dict_individual_number = {} # variable global diccionario para mapear individuos a sus indices
@@ -54,7 +56,7 @@ def inicializar_poblacion(depot_data, clients_data):
         indiv = Individual(depot_data, clients_data, CAPACITY)
         # generamos su ruta de manera aleatoria, luego hacemos la reperación heurísitca a la ruta para que sea valida
         indiv.generate_random_individual()
-        indiv.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
+        indiv.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
         # lo agregamos a la población
         poblacion.append(indiv)
 
@@ -176,7 +178,7 @@ def mutacion(poblacion):
                 # print("mutación en individuo {}: {}={}>".format(indiv,indiv.get_ruta()[g],indiv.get_ruta()[swap]))
                 indiv.get_ruta()[g],indiv.get_ruta()[swap] = indiv.get_ruta()[swap],indiv.get_ruta()[g]
         # luego de realizar la mutación debemos aplicar las correcciones heurísticas para validar las nuevas rutas del individuo
-        indiv.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
+        indiv.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
 
 
 def reproduccion_crossover_cxOrdered(poblacion):
@@ -243,7 +245,7 @@ def reproduccion_crossover_cxOrdered(poblacion):
         hijo1 = Individual(depot_data,clients_data, CAPACITY)
         hijo1.genes = ruta_padre
         # realizamos las reparaciones heuristicas a al primera ruta
-        hijo1.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
+        hijo1.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
         # por último añadimos los dos hijos a la población de la nueva generación
         nueva_generacion.append(hijo1)
         # para el segundo hijo debemos primero tener en cuenta que no se esté poniendo individuos de más
@@ -251,7 +253,7 @@ def reproduccion_crossover_cxOrdered(poblacion):
             hijo2 = Individual(depot_data,clients_data, CAPACITY)
             hijo2.genes = ruta_madre
             # realizamos las reparaciones heuristicas a al segunda ruta
-            hijo2.heuristic_repair_and_fitness(INCLUIR_TIEMPO_ESPERA)
+            hijo2.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
             # lo añadimos a la 2da generación
             nueva_generacion.append(hijo2)
         
@@ -297,6 +299,15 @@ def nsga(poblacion):
         ranking_de_frentes(poblacion)
         # ordenamos a la población de acuerdo a su fitness
         ordenar_poblacion_por_fitness(poblacion)
+
+        # borrar luego !!!
+        cant_reps=0
+        for ind in poblacion:
+            for ind2 in poblacion:
+                if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
+                    cant_reps +=1
+        print('cantidad de individuos repetidos (comienzo): {}'.format(cant_reps))
+
         # # volvemos la población a su valor de tiempo verdadero
         # for ind in poblacion:
         #     ind.volver_a_tiempo_verdadero()
@@ -306,11 +317,29 @@ def nsga(poblacion):
         nueva_generacion = []
         # nueva_generacion = copy.deepcopy(poblacion)
         # primero realizamos crossover para generar los individuos de la nueva generación
-        nueva_generacion = reproduccion_crossover_cxOrdered(poblacion)
+        nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
+        # luego elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
+        nueva_generacion += seleccion_elitista(poblacion)
+
+        # borrar luego !!!
+        cant_reps=0
+        for ind in nueva_generacion:
+            for ind2 in nueva_generacion:
+                if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
+                    cant_reps +=1
+        print('cantidad de individuos repetidos (reproduccion): {}'.format(cant_reps))
+
         # luego mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
-        # por último elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
-        nueva_generacion += seleccion_elitista(poblacion)
+
+        # borrar luego !!!
+        cant_reps=0
+        for ind in nueva_generacion:
+            for ind2 in nueva_generacion:
+                if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
+                    cant_reps +=1
+        print('cantidad de individuos repetidos (mutacion): {}'.format(cant_reps))
+
         # luego incrementamos el número de generación
         generacion += 1
         # pasamos la nueva generación a la población actual (haciendo un deep copy)
@@ -342,7 +371,7 @@ def main():
     
     # dibujar_frente_pareto(poblacion)
 
-    nsga(poblacion)
+    # nsga(poblacion)
 
     # for individuo in poblacion:
     #     print('individuo:')
