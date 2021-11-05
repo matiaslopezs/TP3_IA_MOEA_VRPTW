@@ -18,10 +18,9 @@ MAX_GENERATION_NUMBER = 100
 PROPORCION_ELITISTA = 0
 PROPORCION_CROSSOVER = 1
 PROPORCION_MUTACION = 0
-MUTATION_RATE= 0.0005
+MUTATION_RATE= 0.0002
 INCLUIR_TIEMPO_ESPERA = False # Cambiar este para controlar si incluir a la distancia total (en tiempo) el tiempo que cada vehículo espera al llegar temprano
 dict_individual_number = {} # variable global diccionario para mapear individuos a sus indices
-
 
 def read_file(file_location_path):
 # función para leer el archivo y procesar para que pueda ser utilizado
@@ -191,7 +190,6 @@ def reproduccion_crossover_cxOrdered(poblacion):
     clients_data = data[1:]
     depot_data = data[0]
     nueva_generacion = []
-    pares_reproducidos = []
     # repetir mientras el tamaño de la nueva generación sea menor a la proporcion de sucesores que debe generar el crossover
     while(len(nueva_generacion) < ( NUMERO_DE_INDIVIDUOS * PROPORCION_CROSSOVER)):
         # elegimos un padre y una madre con la técnica de la ruleta
@@ -260,7 +258,9 @@ def reproduccion_crossover_cxOrdered(poblacion):
             hijo2.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
             # lo añadimos a la 2da generación
             nueva_generacion.append(hijo2)
-        
+        # luego hacemos 0 los fitness de los padres para que no vuelvan a cruzarce
+        padre.fitness = 0
+        madre.fitness = 0
     return nueva_generacion
 
 def get_parent_usando_ruleta(poblacion):
@@ -305,13 +305,13 @@ def nsga(poblacion):
         ordenar_poblacion_por_fitness(poblacion)
 
         # borrar luego !!!
-        cant_reps=0
-        for ind in poblacion:
-            for ind2 in poblacion:
-                if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
-                    cant_reps +=1
-                    break
-        print('cantidad de individuos repetidos (comienzo): {}'.format(cant_reps))
+        # cant_reps=0
+        # for ind in poblacion:
+        #     for ind2 in poblacion:
+        #         if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
+        #             cant_reps +=1
+        #             break
+        # print('cantidad de individuos repetidos (comienzo): {}'.format(cant_reps))
 
         # # volvemos la población a su valor de tiempo verdadero
         # for ind in poblacion:
@@ -331,25 +331,25 @@ def nsga(poblacion):
         # luego realizamos crossover para generar los individuos de la nueva generación
         nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
         # borrar luego !!!
-        cant_reps=0
-        for ind in nueva_generacion:
-            for ind2 in nueva_generacion:
-                if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
-                    cant_reps +=1
-                    break
-        print('cantidad de individuos repetidos (reproduccion): {}'.format(cant_reps))
+        # cant_reps=0
+        # for ind in nueva_generacion:
+        #     for ind2 in nueva_generacion:
+        #         if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
+        #             cant_reps +=1
+        #             break
+        # print('cantidad de individuos repetidos (reproduccion): {}'.format(cant_reps))
 
         # luego mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
 
         # borrar luego !!!
-        cant_reps=0
-        for ind in nueva_generacion:
-            for ind2 in nueva_generacion:
-                if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
-                    cant_reps +=1
-                    break
-        print('cantidad de individuos repetidos (mutacion): {}'.format(cant_reps))
+        # cant_reps=0
+        # for ind in nueva_generacion:
+        #     for ind2 in nueva_generacion:
+        #         if ind != ind2 and ind.get_ruta() == ind2.get_ruta():
+        #             cant_reps +=1
+        #             break
+        # print('cantidad de individuos repetidos (mutacion): {}'.format(cant_reps))
 
         # luego incrementamos el número de generación
         generacion += 1
