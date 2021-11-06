@@ -14,7 +14,7 @@ CAPACITY = 0
 N_CLIENTS = 0
 NUMBER_OF_GENES =0
 NUMERO_DE_INDIVIDUOS = 100
-MAX_GENERATION_NUMBER = 2000
+MAX_GENERATION_NUMBER = 200
 PROPORCION_ELITISTA = 0.15
 PROPORCION_CROSSOVER = 0.85
 PROPORCION_MUTACION = 0.02 # porcentaje de individuos de cada genración expuestos a la mutación
@@ -318,9 +318,8 @@ def controlar_repetidos(poblacion):
             poblacion[i] = indiv
     # print(cant_reps)
 
-# BORRAR TB !!!
-def controlar_repetidos_tmp(poblacion):
-# función que se encarga de eliminar un elemento si se encuentra repetido más de 2 veces en la población y agregar un random en su lugar
+def cantidad_repetidos(poblacion):
+# función que cuenta la cantidad de repetidos
     cant_reps = 0
     tam_poblacion = len(poblacion)
     # los for van en reversa
@@ -332,10 +331,6 @@ def controlar_repetidos_tmp(poblacion):
 
 def nsga(poblacion):
 # función que realiza el ciclo o la generación de la población según el método MOEA NSGA
-
-    # BORRAR POR FAVOR !!!!!!
-    aber = []
-
     generacion = 1
     # mientras no se cumpla la condición de parada. Cada ciclo del while es una generación
     while(not condicion_parada(generacion)):
@@ -345,37 +340,14 @@ def nsga(poblacion):
         ordenar_poblacion_por_fitness(poblacion)
         # Mostramos al mejor individuo de la generación actual
         print('generacion {}: Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
-        
-        # BORRAR !!!
-        # si un individuo se está repitiendo mucho en la población, entonces eliminarlo y añadir un nuevo individuo aleatorio
-        print('inicialmente')
-        controlar_repetidos_tmp(poblacion)
-
-        #BORRAR !!!!
-        # for ind in poblacion:
-        #     print(ind.get_fitness_objetivos(), ind.fitness)
-        
         # procedemos a la selección y reproducción:
         nueva_generacion = []
-        # nueva_generacion = copy.deepcopy(poblacion)
         # primero elegimos a los mejores de la generación actual y los hacemos pasar a la nueva generación
         nueva_generacion += seleccion_elitista(poblacion)
         # luego realizamos crossover para generar los individuos de la nueva generación
         nueva_generacion += reproduccion_crossover_cxOrdered(poblacion)
-        
-        # BORRAR !!!
-        # si un individuo se está repitiendo mucho en la población, entonces eliminarlo y añadir un nuevo individuo aleatorio
-        print('luego de crossover')
-        controlar_repetidos_tmp(nueva_generacion)
-
-        # luego mutamos con cierta probabilidad un porcentaje de la nueva población
+         # luego mutamos con cierta probabilidad un porcentaje de la nueva población
         mutacion(nueva_generacion)
-
-        # BORRAR !!!
-        # si un individuo se está repitiendo mucho en la población, entonces eliminarlo y añadir un nuevo individuo aleatorio
-        print('luego de mutacion')
-        controlar_repetidos_tmp(nueva_generacion)
-
         # APORTE PERSONAL: si encontramos en una misma población elementos repetidos, entonces los cambiamos por individuos random para favorecer la exploración
         controlar_repetidos(nueva_generacion)
         # luego incrementamos el número de generación
@@ -385,10 +357,6 @@ def nsga(poblacion):
     # al terminar el while debemos calcular el ranking de frentes de la última nueva generación y ordenar por fitness
     ranking_de_frentes(poblacion)
     ordenar_poblacion_por_fitness(poblacion)
-    # BORRAR !!!
-    print('the final population')
-    for ind in poblacion:
-        print(ind.get_fitness_objetivos(), ind.fitness)
     # finalmente mostramos al mejor individuo final
     print('generacion {} (FINAL): Mejor individuo = Fitness: {}, cant vehiculos: {}, tiempo total: {}'.format(generacion-1,poblacion[0].fitness,poblacion[0].cantidad_vehiculos,poblacion[0].tiempo_total_vehiculos))
 
@@ -411,22 +379,6 @@ def main():
     # dibujar_frente_pareto(poblacion)
 
     nsga(poblacion)
-
-    # ind = Individual(depot_data,clients_data,CAPACITY)
-    # ind.generate_random_individual()
-    # ind.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
-    # print(ind.get_ruta())
-    # for i in range(500):
-    #     print('iteracion {}'.format(i))
-    #     ind.reparacion_heuristica_y_calculo_objetivos(INCLUIR_TIEMPO_ESPERA)
-    #     print(ind.get_fitness_objetivos())
-    # print(ind.calcular_objetivos_a_optimizar())
-    # for individuo in poblacion:
-    #     print('individuo:')
-    #     print(individuo.fitness)
-    #     # get_fitness_objetivos retorna el valor de las funciones objetivo
-    #     print(individuo.get_fitness_objetivos())
-    #     print(individuo.get_ruta())
 
 main()
 
